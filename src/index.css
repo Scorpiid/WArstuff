@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #0D0F14;
+    color: #E8EAF0;
+  }
+
+  body {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.875rem;
+    background-color: #0D0F14;
+    color: #E8EAF0;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #252B38 #0D0F14;
+  }
+
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #0D0F14;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #252B38;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Stat bar — reticle style (elemento firma) */
+  .stat-bar {
+    @apply relative w-full h-px bg-border-col;
+  }
+
+  .stat-bar-fill {
+    @apply absolute top-0 left-0 h-px bg-signal;
+    transition: width 0.4s ease;
+  }
+
+  .stat-bar-marker {
+    @apply absolute top-1/2 -translate-y-1/2 w-0 h-0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 6px solid #C8A84B;
+    transform: translateY(-50%) translateX(-50%);
+    transition: left 0.4s ease;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-surface border border-border-col rounded;
+  }
+
+  .card-header {
+    @apply border-b border-border-col px-4 py-3 flex items-center gap-2;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply font-display font-semibold tracking-widest text-sm px-4 py-2 rounded transition-all duration-150 uppercase;
+  }
+
+  .btn-primary {
+    @apply btn bg-signal text-deep-night hover:bg-signal/80 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-2 text-text-primary border border-border-col hover:border-signal/50 hover:text-signal active:scale-95;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-dim text-text-primary border border-danger/30 hover:bg-danger/80 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-text-muted hover:text-signal active:scale-95;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full bg-deep-night border border-border-col rounded px-3 py-2 text-text-primary font-mono text-sm
+           focus:outline-none focus:border-signal/60 focus:ring-1 focus:ring-signal/20 transition-colors;
+  }
+
+  .select {
+    @apply input appearance-none cursor-pointer;
+  }
+
+  .label {
+    @apply block text-text-muted font-mono text-stat uppercase tracking-widest mb-1;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-stat font-mono uppercase tracking-wider;
+  }
+
+  .badge-active    { @apply badge bg-safe/20 text-safe border border-safe/30; }
+  .badge-wounded   { @apply badge bg-warn/20 text-warn border border-warn/30; }
+  .badge-captured  { @apply badge bg-signal/20 text-signal border border-signal/30; }
+  .badge-killed    { @apply badge bg-danger/20 text-danger border border-danger/30; }
+  .badge-missing   { @apply badge bg-text-muted/20 text-text-muted border border-text-muted/30; }
+  .badge-incapacitated { @apply badge bg-warn-dim/30 text-warn border border-warn/20; }
+  .badge-retired   { @apply badge bg-surface-2 text-text-muted border border-border-col; }
+
+  /* Tables */
+  .war-table {
+    @apply w-full text-sm font-mono;
+  }
+
+  .war-table th {
+    @apply text-left text-text-muted text-stat uppercase tracking-widest border-b border-border-col py-2 px-3 font-normal;
+  }
+
+  .war-table td {
+    @apply py-2 px-3 border-b border-border-col/50 text-text-primary;
+  }
+
+  .war-table tr:hover td {
+    @apply bg-surface-2;
+  }
+
+  /* Section titles */
+  .section-title {
+    @apply font-display font-semibold text-2xl text-text-primary tracking-wide;
+  }
+
+  .section-subtitle {
+    @apply font-mono text-text-muted text-xs uppercase tracking-widest;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-border-col my-4;
+  }
+
+  /* Panel */
+  .panel {
+    @apply bg-surface border border-border-col rounded p-4;
+  }
+}
