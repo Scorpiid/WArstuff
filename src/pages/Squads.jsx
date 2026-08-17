@@ -102,12 +102,20 @@ function SquadForm({ initial, onSave, onCancel, nations }) {
         </FormField>
         {/* Squad size */}
         <FormField label={lang === 'en' ? 'Squad size' : 'Efectivos'}>
-          <input
-            type="number" min="0" max="500"
-            className="input"
-            value={form.squadSize ?? 10}
-            onChange={e => set('squadSize', Math.max(0, parseInt(e.target.value) || 0))}
-          />
+          <div className="flex gap-1">
+            <input
+              type="number" min="0" max="9999"
+              className="input flex-1"
+              value={form.squadSize ?? 10}
+              onChange={e => set('squadSize', Math.max(0, parseInt(e.target.value) || 0))}
+            />
+            <button
+              type="button"
+              className="btn-secondary px-2 text-xs font-mono"
+              onClick={() => set('squadSize', (form.squadSize ?? 10) + 100)}
+              title="+100"
+            >+100</button>
+          </div>
         </FormField>
       </div>
 
@@ -268,6 +276,7 @@ function SquadRow({ squad, nation, vehicles, rules, onEdit, onDelete, onSizeChan
               className="text-text-muted hover:text-danger text-xs w-4 h-4 flex items-center justify-center"
               onClick={() => onSizeChange(squad.id, Math.max(0, size - 1))}
               disabled={isDestroyed}
+              title="-1"
             >−</button>
             <SizeCounter size={size} lang={lang} />
             <button
@@ -275,7 +284,15 @@ function SquadRow({ squad, nation, vehicles, rules, onEdit, onDelete, onSizeChan
               className="text-text-muted hover:text-safe text-xs w-4 h-4 flex items-center justify-center"
               onClick={() => onSizeChange(squad.id, size + 1)}
               disabled={isDestroyed}
+              title="+1"
             >+</button>
+            <button
+              type="button"
+              className="text-text-muted hover:text-safe text-stat font-mono px-1 border border-border-col rounded hover:border-safe/50 transition-colors"
+              onClick={() => onSizeChange(squad.id, size + 100)}
+              disabled={isDestroyed}
+              title="+100"
+            >+100</button>
           </div>
         </td>
         <td><StatusBadge status={squad.status} /></td>

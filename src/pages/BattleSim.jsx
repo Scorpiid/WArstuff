@@ -224,8 +224,29 @@ export default function BattleSim() {
       const dVehicles = vehicles.filter(v => defenderSquad.vehicleIds?.includes(v.id) && v.status !== 'DESTROYED')
       const result = simulateBattle({ attackerSquad, defenderSquad, attackerVehicles: aVehicles, defenderVehicles: dVehicles, attackerNation, defenderNation, terrain, battleModifiers: battleMods, mode, seed }, rules)
       addBattle(result)
-      updateSquad(attackerSquad.id, { morale: result.result.attacker.finalMorale, fatigue: result.result.attacker.finalFatigue, suppression: result.result.attacker.finalSuppression })
-      updateSquad(defenderSquad.id, { morale: result.result.defender.finalMorale, fatigue: result.result.defender.finalFatigue, suppression: result.result.defender.finalSuppression })
+
+      // Apply battle results back to squads
+      const aRes = result.result.attacker
+      const dRes = result.result.defender
+
+      const aTotalLosses = aRes.killed + aRes.captured
+      const dTotalLosses = dRes.killed + dRes.captured
+
+      const newASize = Math.max(0, (attackerSquad.squadSize ?? 0) - aTotalLosses)
+      const newDSize = Math.max(0, (defenderSquad.squadSize ?? 0) - dTotalLosses)
+
+      updateSquad(attackerSquad.id, {
+        morale:      aRes.finalMorale,
+        fatigue:     aRes.finalFatigue,
+        suppression: aRes.finalSuppression,
+        squadSize:   newASize,
+      })
+      updateSquad(defenderSquad.id, {
+        morale:      dRes.finalMorale,
+        fatigue:     dRes.finalFatigue,
+        suppression: dRes.finalSuppression,
+        squadSize:   newDSize,
+      })
       addEvent({ type: 'BATTLE_END', message: `${attackerSquad.name} vs ${defenderSquad.name} — ${result.result.winner} (${result.result.reason?.replace(/_/g, ' ')})`, battleId: result.id })
       setSimResult(result)
       setSimulating(false)

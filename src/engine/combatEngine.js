@@ -135,8 +135,8 @@ function resolveRound(roundNum, aState, dState, rules, rng) {
   const aHits = Math.round(dState.activeCount * aAdvantage * 0.35)
   const dHits = Math.round(aState.activeCount * (1 - aAdvantage) * 0.35)
 
-  // Casualties from hits
-  const calcCas = (hits, medCapability, rules) => {
+  // Casualties from hits — wounded+killed clamped to available active troops
+  const calcCas = (hits, activeCount, medCapability, rules) => {
     const medSave = norm(medCapability ?? 50) * rules.casualties.medicalSaveChance
     let killed = 0, wounded = 0, captured = 0
 
@@ -146,11 +146,24 @@ function resolveRound(roundNum, aState, dState, rules, rng) {
       else if (r < rules.casualties.baseKillRate * (1 - medSave) + rules.casualties.baseWoundRate) wounded++
       else wounded++
     }
+
+    // Clamp: total casualties cannot exceed available active troops
+    const totalCas = killed + wounded + captured
+    if (totalCas > activeCount) {
+      const scale = activeCount / totalCas
+      killed   = Math.floor(killed   * scale)
+      wounded  = Math.floor(wounded  * scale)
+      captured = Math.floor(captured * scale)
+    }
+    // wounded alone also can't exceed active (after killed are removed)
+    const remaining = Math.max(0, activeCount - killed - captured)
+    wounded = Math.min(wounded, remaining)
+
     return { killed, wounded, captured }
   }
 
-  const aCas = calcCas(dHits, aState.squad.medical ?? 50, rules)  // attacker takes dHits
-  const dCas = calcCas(aHits, dState.squad.medical ?? 50, rules)  // defender takes aHits
+  const aCas = calcCas(dHits, aState.activeCount, aState.squad.medical ?? 50, rules)
+  const dCas = calcCas(aHits, dState.activeCount, dState.squad.medical ?? 50, rules)
 
   // Suppression
   const aSupp = Math.max(0, aState.suppression - rules.suppression.decayPerRound + (aAdvantage < 0.5 ? rules.suppression.perRound : 0))
