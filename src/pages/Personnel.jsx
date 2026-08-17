@@ -6,6 +6,8 @@ import EmptyState from '../components/EmptyState'
 import FormField from '../components/FormField'
 import StatusBadge from '../components/StatusBadge'
 import { useT } from '../i18n/LanguageContext'
+import { RandomPersonnelModal } from '../components/RandomGeneratorModal'
+import { generateSquadPersonnel } from '../engine/randomizer'
 
 const RANKS = ['Private','Private First Class','Corporal','Sergeant','Staff Sergeant','Lieutenant','Captain','Major','Colonel','General']
 const ROLES = ['Commander','Rifleman','Machine Gunner','Medic','Scout','Marksman','Engineer','Radio Operator','Driver','Support']
@@ -121,10 +123,19 @@ export default function Personnel() {
   const [showCreate,    setShowCreate]    = useState(false)
   const [editing,       setEditing]       = useState(null)
   const [history,       setHistory]       = useState(null)
+  const [showRandom,    setShowRandom]    = useState(false)
   const [filterStatus,  setFilterStatus]  = useState('')
   const [filterSquad,   setFilterSquad]   = useState('')
   const [filterRole,    setFilterRole]    = useState('')
   const [search,        setSearch]        = useState('')
+
+  const handleGeneratePersonnel = (tierKey, squadId, count) => {
+    const batch = generateSquadPersonnel(tierKey, squadId, count)
+    batch.forEach(data => {
+      addPersonnel(data)
+      if (data.squadId) assignPersonnelToSquad(data.id, data.squadId)
+    })
+  }
 
   const filtered = personnel.filter(per => {
     const matchSearch = !search       || per.name.toLowerCase().includes(search.toLowerCase())
@@ -139,7 +150,13 @@ export default function Personnel() {
   return (
     <div>
       <PageHeader title={p.title} subtitle={subtitle}
-        actions={<button className="btn-primary" onClick={() => setShowCreate(true)}>{p.btnNew}</button>} />
+        actions={
+          <div className="flex gap-2">
+            <button className="btn-secondary" onClick={() => setShowRandom(true)}>{t.random.btnRandomPersonnel}</button>
+            <button className="btn-primary"   onClick={() => setShowCreate(true)}>{p.btnNew}</button>
+          </div>
+        }
+      />
 
       {personnel.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -229,6 +246,13 @@ export default function Personnel() {
         </Modal>
       )}
       {history && <HistoryModal person={history} onClose={() => setHistory(null)} />}
+      {showRandom && (
+        <RandomPersonnelModal
+          squads={squads}
+          onGenerate={handleGeneratePersonnel}
+          onClose={() => setShowRandom(false)}
+        />
+      )}
     </div>
   )
 }

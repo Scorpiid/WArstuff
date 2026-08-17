@@ -10,6 +10,8 @@ import StatusBadge from '../components/StatusBadge'
 import { defaultSquadStats } from '../store/useStore'
 import { calcDerivedStats } from '../engine/combatEngine'
 import { useT } from '../i18n/LanguageContext'
+import { RandomSquadModal } from '../components/RandomGeneratorModal'
+import { generateRandomSquad } from '../engine/randomizer'
 
 const SQUAD_TYPES   = ['Infantry','Special Operations','Armored','Reconnaissance','Artillery','Engineering','Medical','Logistics','Air Assault']
 const SQUAD_STATUSES = ['ACTIVE','ENGAGED','RETREATING','DESTROYED','CAPTURED']
@@ -241,8 +243,14 @@ export default function Squads() {
   const [showCreate,    setShowCreate]    = useState(false)
   const [editing,       setEditing]       = useState(null)
   const [deleting,      setDeleting]      = useState(null)
+  const [showRandom,    setShowRandom]    = useState(false)
   const [filter,        setFilter]        = useState('')
   const [filterNation,  setFilterNation]  = useState('')
+
+  const handleGenerateSquad = (tierKey, nationId) => {
+    const squadData = generateRandomSquad(tierKey, nationId)
+    addSquad(squadData)
+  }
 
   const filtered = squads.filter(sq => {
     const matchName   = !filter       || sq.name.toLowerCase().includes(filter.toLowerCase())
@@ -254,7 +262,13 @@ export default function Squads() {
   return (
     <div>
       <PageHeader title={s.title} subtitle={subtitle}
-        actions={<button className="btn-primary" onClick={() => setShowCreate(true)}>{s.btnNew}</button>} />
+        actions={
+          <div className="flex gap-2">
+            <button className="btn-secondary" onClick={() => setShowRandom(true)}>{t.random.btnRandomSquad}</button>
+            <button className="btn-primary"   onClick={() => setShowCreate(true)}>{s.btnNew}</button>
+          </div>
+        }
+      />
 
       {squads.length > 0 && (
         <div className="flex gap-3 mb-4">
@@ -309,6 +323,13 @@ export default function Squads() {
         <ConfirmDialog title={s.deleteTitle} message={s.deleteMsg} danger
           onConfirm={() => { deleteSquad(deleting); setDeleting(null) }}
           onCancel={() => setDeleting(null)} />
+      )}
+      {showRandom && (
+        <RandomSquadModal
+          nations={nations}
+          onGenerate={handleGenerateSquad}
+          onClose={() => setShowRandom(false)}
+        />
       )}
     </div>
   )

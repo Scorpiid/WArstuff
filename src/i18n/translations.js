@@ -581,6 +581,32 @@ export const translations = {
       resetConfirmTitle: 'Reiniciar campaña',
       resetConfirmMsg:   'Se eliminarán TODOS los datos: naciones, escuadras, personal, vehículos, batallas y eventos. Las reglas volverán a los valores por defecto. Esta acción no se puede deshacer.',
     },
+
+    // ── Random generators ──────────────────────────────────────────────────
+    random: {
+      // Squad
+      btnRandomSquad:    '⚄ Escuadra aleatoria',
+      squadTierLabel:    'Nivel de escuadra',
+      squadTiers: {
+        recruit: { label: 'Recluta',  desc: 'Estadísticas bajas, poca experiencia' },
+        soldier: { label: 'Soldado',  desc: 'Estadísticas moderadas, entrenado' },
+        veteran: { label: 'Veterano', desc: 'Estadísticas altas, experimentado' },
+        elite:   { label: 'Élite',    desc: 'Estadísticas máximas, operador especial' },
+      },
+      squadGenerated:    'Escuadra generada',
+      // Personnel
+      btnRandomPersonnel: '⚄ Personal aleatorio',
+      personnelTierLabel: 'Aptitud del efectivo',
+      personnelCount:    'Cantidad',
+      personnelTiers: {
+        low:     { label: 'Baja aptitud',    desc: 'Reclutas sin experiencia de combate' },
+        regular: { label: 'Aptitud regular', desc: 'Soldados de línea entrenados' },
+        high:    { label: 'Alta aptitud',    desc: 'Efectivos experimentados' },
+        elite:   { label: 'Muy alta aptitud',desc: 'Operadores de élite' },
+      },
+      personnelGenerated: '{n} efectivos generados',
+      selectSquadFirst:  'Selecciona una escuadra para asignar el personal',
+    },
   },
 
   // ════════════════════════════════════════════════════════════════════════
@@ -1140,6 +1166,32 @@ export const translations = {
       resetBtn:       '✕ Reset everything',
       resetConfirmTitle: 'Reset campaign',
       resetConfirmMsg:   'ALL data will be deleted: nations, squads, personnel, vehicles, battles, and events. Rules will return to defaults. This cannot be undone.',
+    },
+
+    // ── Random generators ──────────────────────────────────────────────────
+    random: {
+      // Squad
+      btnRandomSquad:    '⚄ Random squad',
+      squadTierLabel:    'Squad tier',
+      squadTiers: {
+        recruit: { label: 'Recruit',  desc: 'Low stats, minimal experience' },
+        soldier: { label: 'Soldier',  desc: 'Moderate stats, trained' },
+        veteran: { label: 'Veteran',  desc: 'High stats, experienced' },
+        elite:   { label: 'Elite',    desc: 'Peak stats, special operator' },
+      },
+      squadGenerated:    'Squad generated',
+      // Personnel
+      btnRandomPersonnel: '⚄ Random personnel',
+      personnelTierLabel: 'Aptitude',
+      personnelCount:    'Count',
+      personnelTiers: {
+        low:     { label: 'Low aptitude',       desc: 'Recruits with no combat experience' },
+        regular: { label: 'Regular aptitude',   desc: 'Trained line soldiers' },
+        high:    { label: 'High aptitude',      desc: 'Experienced operators' },
+        elite:   { label: 'Very high aptitude', desc: 'Elite special operators' },
+      },
+      personnelGenerated: '{n} members generated',
+      selectSquadFirst:  'Select a squad to assign the personnel',
     },
   },
 }
