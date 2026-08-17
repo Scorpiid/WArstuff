@@ -67,6 +67,7 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
         {Object.entries(catalog).map(([key, catDef]) => (
           <button
             key={key}
+            type="button"
             onClick={() => setActiveCategory(key)}
             className={`px-3 py-2 text-xs font-display font-semibold tracking-wide shrink-0 transition-colors border-r border-border-col last:border-0
               ${activeCategory === key
@@ -85,6 +86,7 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
         {/* None option for optional categories */}
         {cat.optional && (
           <button
+            type="button"
             onClick={() => onChange(activeCategory, null)}
             className={`text-left p-2 rounded border text-xs transition-colors
               ${!selected[activeCategory]
@@ -92,17 +94,19 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
                 : 'border-border-col text-text-muted hover:border-border-col/80'
               }`}
           >
-            <span className="font-display font-semibold">— Sin componente —</span>
+            <span className="font-display font-semibold">
+              {lang === 'en' ? '— No component —' : '— Sin componente —'}
+            </span>
           </button>
         )}
         {cat.options.map(opt => {
           const isSelected = selected[activeCategory] === opt.id
-          // Calculate stat preview
           const preview = Object.entries(opt.stats)
             .map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${k}`)
             .join(', ')
           return (
             <button
+              type="button"
               key={opt.id}
               onClick={() => onChange(activeCategory, opt.id)}
               className={`text-left p-2.5 rounded border transition-all

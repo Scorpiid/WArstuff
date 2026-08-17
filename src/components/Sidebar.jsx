@@ -12,18 +12,17 @@ export default function Sidebar() {
   const ongoingBattles = battles.filter(b => b.status === 'IN_PROGRESS').length
 
   const NAV_ITEMS = [
-    { to: '/',           icon: '▣', label: t.nav.dashboard },
-    { to: '/nations',    icon: '◈', label: t.nav.nations },
-    { to: '/squads',     icon: '◆', label: t.nav.squads },
-    { to: '/personnel',  icon: '◉', label: t.nav.personnel },
-    { to: '/vehicles',   icon: '⬡', label: t.nav.vehicles },
-    { to: '/vessels',    icon: '⚓', label: t.nav.vessels },
-    { to: '/battle',     icon: '⚔', label: t.nav.simulator },
-    { to: '/battles',    icon: '◎', label: t.nav.battles },
-    { to: '/log',        icon: '≡', label: t.nav.log },
-    { to: '/rules',      icon: '⚙', label: t.nav.rules },
-    { to: '/stats',      icon: '◈', label: t.nav.statistics },
-    { to: '/settings',   icon: '↓', label: t.nav.saveLoad },
+    { to: '/',          icon: '▣', label: t.nav.dashboard },
+    { to: '/nations',   icon: '◈', label: t.nav.nations },
+    { to: '/squads',    icon: '◆', label: t.nav.squads },
+    { to: '/vehicles',  icon: '⬡', label: t.nav.vehicles },
+    { to: '/vessels',   icon: '⚓', label: t.nav.vessels },
+    { to: '/battle',    icon: '⚔', label: t.nav.simulator },
+    { to: '/battles',   icon: '◎', label: t.nav.battles },
+    { to: '/log',       icon: '≡', label: t.nav.log },
+    { to: '/rules',     icon: '⚙', label: t.nav.rules },
+    { to: '/stats',     icon: '◈', label: t.nav.statistics },
+    { to: '/settings',  icon: '↓', label: t.nav.saveLoad },
   ]
 
   return (

@@ -53,12 +53,13 @@ export default function Dashboard() {
   const setCampaignName = useStore(s => s.setCampaignName)
   const setCurrentTurn  = useStore(s => s.setCurrentTurn)
 
-  const activeSquads   = squads.filter(s => s.status === 'ACTIVE' || s.status === 'ENGAGED')
-  const ongoingBattles = battles.filter(b => b.status === 'IN_PROGRESS')
-  const totalKilled    = battles.reduce((a, b) => a + (b.result?.attacker?.killed || 0) + (b.result?.defender?.killed || 0), 0)
-  const totalCaptured  = battles.reduce((a, b) => a + (b.result?.attacker?.captured || 0) + (b.result?.defender?.captured || 0), 0)
-  const totalWounded   = battles.reduce((a, b) => a + (b.result?.attacker?.wounded || 0) + (b.result?.defender?.wounded || 0), 0)
-  const recentEvents   = events.slice(0, 8)
+  const activeSquads    = squads.filter(s => s.status === 'ACTIVE' || s.status === 'ENGAGED')
+  const ongoingBattles  = battles.filter(b => b.status === 'IN_PROGRESS')
+  const totalKilled     = battles.reduce((a, b) => a + (b.result?.attacker?.killed || 0) + (b.result?.defender?.killed || 0), 0)
+  const totalCaptured   = battles.reduce((a, b) => a + (b.result?.attacker?.captured || 0) + (b.result?.defender?.captured || 0), 0)
+  const totalWounded    = battles.reduce((a, b) => a + (b.result?.attacker?.wounded || 0) + (b.result?.defender?.wounded || 0), 0)
+  const totalEffectives = squads.reduce((a, sq) => a + (sq.squadSize ?? 0), 0)
+  const recentEvents    = events.slice(0, 8)
 
   return (
     <div>
@@ -92,12 +93,12 @@ export default function Dashboard() {
 
       {/* Stat grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <StatCard icon="◈" label={d.colNation}       value={nations.length}          onClick={() => navigate('/nations')} />
-        <StatCard icon="◆" label={d.activeSquads}    value={activeSquads.length}     sub={d.ofTotal.replace('{n}', squads.length)} onClick={() => navigate('/squads')} />
-        <StatCard icon="⚔" label={d.ongoingBattles}  value={ongoingBattles.length}   color={ongoingBattles.length > 0 ? 'text-danger' : 'text-signal'} onClick={() => navigate('/battles')} />
-        <StatCard icon="☠" label={d.totalCasualties} value={totalKilled}             color="text-danger" sub={d.wounded.replace('{n}', totalWounded)} onClick={() => navigate('/stats')} />
-        <StatCard icon="⛓" label={d.captured}        value={totalCaptured}           color="text-warn" onClick={() => navigate('/stats')} />
-        <StatCard icon="◧" label={d.vehicles}         value={vehicles.length}         sub={d.destroyed.replace('{n}', vehicles.filter(v => v.status === 'DESTROYED').length)} onClick={() => navigate('/vehicles')} />
+        <StatCard icon="◈" label={d.colNation}       value={nations.length}         onClick={() => navigate('/nations')} />
+        <StatCard icon="◆" label={d.activeSquads}    value={activeSquads.length}    sub={d.ofTotal.replace('{n}', squads.length)} onClick={() => navigate('/squads')} />
+        <StatCard icon="◉" label={d.totalEffectives} value={totalEffectives} sub={`${squads.filter(s => s.status === 'DESTROYED').length} ☠`} onClick={() => navigate('/squads')} />
+        <StatCard icon="⚔" label={d.ongoingBattles}  value={ongoingBattles.length}  color={ongoingBattles.length > 0 ? 'text-danger' : 'text-signal'} onClick={() => navigate('/battles')} />
+        <StatCard icon="☠" label={d.totalCasualties} value={totalKilled}            color="text-danger" sub={d.wounded.replace('{n}', totalWounded)} onClick={() => navigate('/stats')} />
+        <StatCard icon="◧" label={d.vehicles}         value={vehicles.length}        sub={d.destroyed.replace('{n}', vehicles.filter(v => v.status === 'DESTROYED').length)} onClick={() => navigate('/vehicles')} />
       </div>
 
       {/* Quick actions */}

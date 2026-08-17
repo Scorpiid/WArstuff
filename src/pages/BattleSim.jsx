@@ -31,7 +31,7 @@ function SquadPreview({ squad, vehicles, label, color }) {
         <StatBar label={b.statFatigue}    value={squad.fatigue    ?? 10} color="warn" />
       </div>
       <div className="text-xs text-text-muted border-t border-border-col/50 pt-2 flex justify-between">
-        <span>{b.previewPersonnel.replace('{n}', squad.personnelIds?.length || 0)}</span>
+        <span>{b.previewPersonnel.replace('{n}', squad.squadSize ?? 0)}</span>
         <span>{b.previewVehicles.replace('{n}', squadVehicles.length)}</span>
       </div>
     </div>

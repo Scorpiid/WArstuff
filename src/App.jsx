@@ -1,18 +1,17 @@
 import { Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 
-import Dashboard    from './pages/Dashboard'
-import Nations      from './pages/Nations'
-import Squads       from './pages/Squads'
-import Personnel    from './pages/Personnel'
-import Vehicles     from './pages/Vehicles'
-import Vessels      from './pages/Vessels'
-import BattleSim    from './pages/BattleSim'
-import Battles      from './pages/Battles'
-import EventLog     from './pages/EventLog'
-import RulesEditor  from './pages/RulesEditor'
-import Statistics   from './pages/Statistics'
-import Settings     from './pages/Settings'
+import Dashboard   from './pages/Dashboard'
+import Nations     from './pages/Nations'
+import Squads      from './pages/Squads'
+import Vehicles    from './pages/Vehicles'
+import Vessels     from './pages/Vessels'
+import BattleSim   from './pages/BattleSim'
+import Battles     from './pages/Battles'
+import EventLog    from './pages/EventLog'
+import RulesEditor from './pages/RulesEditor'
+import Statistics  from './pages/Statistics'
+import Settings    from './pages/Settings'
 
 export default function App() {
   return (
@@ -21,18 +20,17 @@ export default function App() {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <Routes>
-            <Route path="/"          element={<Dashboard />} />
-            <Route path="/nations"   element={<Nations />} />
-            <Route path="/squads"    element={<Squads />} />
-            <Route path="/personnel" element={<Personnel />} />
-            <Route path="/vehicles"  element={<Vehicles />} />
-            <Route path="/vessels"   element={<Vessels />} />
-            <Route path="/battle"    element={<BattleSim />} />
-            <Route path="/battles"   element={<Battles />} />
-            <Route path="/log"       element={<EventLog />} />
-            <Route path="/rules"     element={<RulesEditor />} />
-            <Route path="/stats"     element={<Statistics />} />
-            <Route path="/settings"  element={<Settings />} />
+            <Route path="/"         element={<Dashboard />} />
+            <Route path="/nations"  element={<Nations />} />
+            <Route path="/squads"   element={<Squads />} />
+            <Route path="/vehicles" element={<Vehicles />} />
+            <Route path="/vessels"  element={<Vessels />} />
+            <Route path="/battle"   element={<BattleSim />} />
+            <Route path="/battles"  element={<Battles />} />
+            <Route path="/log"      element={<EventLog />} />
+            <Route path="/rules"    element={<RulesEditor />} />
+            <Route path="/stats"    element={<Statistics />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
       </main>

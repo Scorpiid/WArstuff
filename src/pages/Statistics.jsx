@@ -144,41 +144,6 @@ function SquadStats({ squads, nations, battles, vehicles, s }) {
   )
 }
 
-function PersonnelStatusBreakdown({ personnel, s }) {
-  const STATUSES = ['ACTIVE','WOUNDED','INCAPACITATED','MISSING','CAPTURED','KILLED','RETIRED']
-  const counts   = STATUSES.map(st => ({ status: st, count: personnel.filter(p => p.status === st).length }))
-  const total    = personnel.length
-  const colors   = { ACTIVE:'bg-safe', WOUNDED:'bg-warn', INCAPACITATED:'bg-warn-dim', MISSING:'bg-text-muted', CAPTURED:'bg-signal', KILLED:'bg-danger', RETIRED:'bg-border-col' }
-  const labels   = { ACTIVE:s.statusActive, WOUNDED:s.statusWounded, INCAPACITATED:s.statusIncap, MISSING:s.statusMissing, CAPTURED:s.statusCaptured, KILLED:s.statusKilled, RETIRED:s.statusRetired }
-
-  return (
-    <div className="card">
-      <div className="card-header">
-        <span className="text-signal">◉</span>
-        <h2 className="font-display font-semibold tracking-wide">{s.personnelStatus}</h2>
-        <span className="ml-auto text-text-muted font-mono text-xs">{s.effectivesTotal.replace('{n}', total)}</span>
-      </div>
-      <div className="p-4">
-        {total > 0 && (
-          <div className="flex h-4 rounded overflow-hidden mb-3 gap-px">
-            {counts.filter(c => c.count > 0).map(({ status, count }) => (
-              <div key={status} className={`${colors[status]} transition-all`} style={{ width:`${(count/total)*100}%` }} title={`${labels[status]}: ${count}`} />
-            ))}
-          </div>
-        )}
-        <div className="grid grid-cols-4 gap-3">
-          {counts.map(({ status, count }) => (
-            <div key={status} className="text-center">
-              <div className={`font-mono text-xl font-medium ${status==='ACTIVE'?'text-safe':status==='KILLED'?'text-danger':status==='CAPTURED'?'text-signal':status==='WOUNDED'||status==='INCAPACITATED'?'text-warn':'text-text-muted'}`}>{count}</div>
-              <div className="label text-center">{labels[status]}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function BattleSummary({ battles, s }) {
   const detectionCounts = ['AMBUSH','NO_CONTACT','PARTIAL','FULL'].map(o => ({
     label: o.replace('_', ' '),
@@ -226,20 +191,20 @@ export default function Statistics() {
   const s = t.statistics
   const nations   = useStore(st => st.nations)
   const squads    = useStore(st => st.squads)
-  const personnel = useStore(st => st.personnel)
   const vehicles  = useStore(st => st.vehicles)
   const battles   = useStore(st => st.battles)
 
-  const totalKilled   = battles.reduce((a, b) => a + (b.result?.attacker?.killed || 0) + (b.result?.defender?.killed || 0), 0)
-  const totalWounded  = battles.reduce((a, b) => a + (b.result?.attacker?.wounded || 0) + (b.result?.defender?.wounded || 0), 0)
-  const totalCaptured = battles.reduce((a, b) => a + (b.result?.attacker?.captured || 0) + (b.result?.defender?.captured || 0), 0)
-  const attackerWins  = battles.filter(b => b.result?.winner === 'ATTACKER').length
-  const defenderWins  = battles.filter(b => b.result?.winner === 'DEFENDER').length
-  const draws         = battles.filter(b => b.result?.winner === 'DRAW').length
+  const totalKilled       = battles.reduce((a, b) => a + (b.result?.attacker?.killed || 0) + (b.result?.defender?.killed || 0), 0)
+  const totalWounded      = battles.reduce((a, b) => a + (b.result?.attacker?.wounded || 0) + (b.result?.defender?.wounded || 0), 0)
+  const totalCaptured     = battles.reduce((a, b) => a + (b.result?.attacker?.captured || 0) + (b.result?.defender?.captured || 0), 0)
+  const attackerWins      = battles.filter(b => b.result?.winner === 'ATTACKER').length
+  const defenderWins      = battles.filter(b => b.result?.winner === 'DEFENDER').length
+  const draws             = battles.filter(b => b.result?.winner === 'DRAW').length
   const destroyedVehicles = vehicles.filter(v => v.status === 'DESTROYED').length
+  const totalEffectives   = squads.reduce((a, sq) => a + (sq.squadSize ?? 0), 0)
+  const destroyedSquads   = squads.filter(sq => sq.status === 'DESTROYED').length
 
   const noData = nations.length === 0 && squads.length === 0 && battles.length === 0
-
   if (noData) return (
     <div>
       <PageHeader title={s.title} subtitle={s.subtitle} />
@@ -259,12 +224,12 @@ export default function Statistics() {
         <StatBox label={s.totalWounded}      value={totalWounded}  color="text-warn" />
         <StatBox label={s.totalCaptured}     value={totalCaptured} color="text-signal" />
         <StatBox label={s.vehiclesDestroyed} value={destroyedVehicles} color="text-danger" sub={s.of.replace('{n}', vehicles.length)} />
+        <StatBox label={s.totalEffectives || 'Efectivos'} value={totalEffectives} sub={`${destroyedSquads} ☠`} />
       </div>
       <div className="space-y-4">
-        {battles.length  > 0 && <BattleSummary battles={battles} s={s} />}
-        {nations.length  > 0 && <NationLeaderboard nations={nations} squads={squads} battles={battles} s={s} />}
-        {squads.length   > 0 && <SquadStats squads={squads} nations={nations} battles={battles} vehicles={vehicles} s={s} />}
-        {personnel.length > 0 && <PersonnelStatusBreakdown personnel={personnel} s={s} />}
+        {battles.length > 0 && <BattleSummary battles={battles} s={s} />}
+        {nations.length > 0 && <NationLeaderboard nations={nations} squads={squads} battles={battles} s={s} />}
+        {squads.length  > 0 && <SquadStats squads={squads} nations={nations} battles={battles} vehicles={vehicles} s={s} />}
       </div>
     </div>
   )

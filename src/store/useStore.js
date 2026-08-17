@@ -24,55 +24,48 @@ export const defaultSquadStats = () => ({
   defense:        65,
   suppression:    0,
   // Supply
-  ammo:           100,
-  medSupplies:    100,
-  fuel:           100,
-  commsEquip:     100,
+  ammo:        100,
+  medSupplies: 100,
+  fuel:        100,
+  commsEquip:  100,
 })
-
-// ─── Active personnel count helper ────────────────────────────────────────
-// Returns count of ACTIVE personnel in a squad (used for destruction check)
-function activePersonnelCount(personnel, personnelIds) {
-  if (!personnelIds || personnelIds.length === 0) return null // null = no personnel tracked
-  return personnel.filter(p => personnelIds.includes(p.id) && p.status === 'ACTIVE').length
-}
 
 // ─── Store ─────────────────────────────────────────────────────────────────
 const useStore = create(
   immer((set, get) => ({
 
     // ── Meta ──────────────────────────────────────────────────────────────
-    currentTurn: 1,
-    campaignName: 'New Campaign',
+    currentTurn:     1,
+    campaignName:    'New Campaign',
     campaignStarted: ts(),
 
-    setCurrentTurn: (n) => set(s => { s.currentTurn = n }),
+    setCurrentTurn:  (n)    => set(s => { s.currentTurn  = n }),
     setCampaignName: (name) => set(s => { s.campaignName = name }),
 
     // ── Rules ─────────────────────────────────────────────────────────────
     rules: { ...DEFAULT_RULES },
 
-    updateRules: (patch) => set(s => { Object.assign(s.rules, patch) }),
+    updateRules:        (patch)          => set(s => { Object.assign(s.rules, patch) }),
     updateRulesSection: (section, patch) => set(s => { Object.assign(s.rules[section], patch) }),
-    resetRules: () => set(s => { s.rules = { ...DEFAULT_RULES } }),
+    resetRules:         ()               => set(s => { s.rules = { ...DEFAULT_RULES } }),
 
     // ── Nations ───────────────────────────────────────────────────────────
     nations: [],
 
     addNation: (data) => set(s => {
       const nation = {
-        id: uuid(),
-        name: data.name || 'Nueva Nación',
-        color: data.color || '#C8A84B',
-        flag: data.flag || '',
-        playerName: data.playerName || '',
-        description: data.description || '',
-        doctrine: data.doctrine || 'Combined Arms',
+        id:           uuid(),
+        name:         data.name         || 'Nueva Nación',
+        color:        data.color        || '#C8A84B',
+        flag:         data.flag         || '',
+        playerName:   data.playerName   || '',
+        description:  data.description  || '',
+        doctrine:     data.doctrine     || 'Combined Arms',
         intelligence: data.intelligence ?? 50,
-        logistics: data.logistics ?? 50,
-        score: 0,
-        squadIds: [],
-        createdAt: ts(),
+        logistics:    data.logistics    ?? 50,
+        score:        0,
+        squadIds:     [],
+        createdAt:    ts(),
       }
       s.nations.push(nation)
       get().addEvent({ type: 'NATION_CREATED', message: `Nación creada: ${nation.name}`, nationId: nation.id })
@@ -110,16 +103,17 @@ const useStore = create(
 
     addSquad: (data) => set(s => {
       const squad = {
-        id: uuid(),
-        name: data.name || 'Nueva Escuadra',
-        nationId: data.nationId || null,
+        id:        uuid(),
+        name:      data.name      || 'Nueva Escuadra',
+        nationId:  data.nationId  || null,
         commander: data.commander || '',
-        type: data.type || 'Infantry',
-        status: data.status || 'ACTIVE',
-        personnelIds: [],
+        type:      data.type      || 'Infantry',
+        status:    data.status    || 'ACTIVE',
+        // squadSize: total headcount. Tracks soldiers directly, no personnel entities.
+        squadSize: data.squadSize ?? 10,
         vehicleIds: [],
         ...defaultSquadStats(),
-        // Allow individual stat overrides from data (not nested in stats obj)
+        // Allow individual stat overrides from data
         ...(Object.fromEntries(
           Object.entries(data).filter(([k]) => k in defaultSquadStats())
         )),
@@ -135,7 +129,18 @@ const useStore = create(
 
     updateSquad: (id, patch) => set(s => {
       const sq = s.squads.find(x => x.id === id)
-      if (sq) Object.assign(sq, patch)
+      if (!sq) return
+      Object.assign(sq, patch)
+      // Auto-destroy if squadSize hits 0
+      if (patch.squadSize !== undefined && patch.squadSize <= 0 && sq.status !== 'DESTROYED') {
+        sq.status    = 'DESTROYED'
+        sq.squadSize = 0
+        get().addEvent({
+          type:    'SQUAD_DESTROYED',
+          message: `Escuadra destruida: ${sq.name} — sin efectivos`,
+          squadId: sq.id,
+        })
+      }
     }),
 
     deleteSquad: (id) => set(s => {
@@ -146,95 +151,19 @@ const useStore = create(
       get().addEvent({ type: 'SQUAD_DELETED', message: `Escuadra eliminada: ${sq.name}` })
     }),
 
-    // ── Personnel ─────────────────────────────────────────────────────────
-    personnel: [],
-
-    addPersonnel: (data) => set(s => {
-      const p = {
-        id: uuid(),
-        name: data.name || 'Sin nombre',
-        rank: data.rank || 'Private',
-        role: data.role || 'Rifleman',
-        experience: data.experience ?? 50,
-        health: data.health ?? 100,
-        skill: data.skill ?? 50,
-        weapon: data.weapon || 'Assault Rifle',
-        status: data.status || 'ACTIVE',
-        squadId: data.squadId || null,
-        notes: data.notes || '',
-        history: [],
-        createdAt: ts(),
-      }
-      s.personnel.push(p)
-      if (p.squadId) {
-        const sq = s.squads.find(x => x.id === p.squadId)
-        if (sq && !sq.personnelIds.includes(p.id)) sq.personnelIds.push(p.id)
-      }
-    }),
-
-    updatePersonnel: (id, patch) => set(s => {
-      const p = s.personnel.find(x => x.id === id)
-      if (!p) return
-      const oldStatus = p.status
-      Object.assign(p, patch)
-      if (patch.status && patch.status !== oldStatus) {
-        p.history.push({ from: oldStatus, to: patch.status, at: ts() })
-      }
-      // Check squad destruction after personnel status change
-      if (patch.status && p.squadId) {
-        const sq = s.squads.find(x => x.id === p.squadId)
-        if (sq && sq.status !== 'DESTROYED') {
-          const activeCount = s.personnel.filter(
-            per => sq.personnelIds.includes(per.id) && per.status === 'ACTIVE'
-          ).length
-          if (activeCount === 0 && sq.personnelIds.length > 0) {
-            sq.status = 'DESTROYED'
-            get().addEvent({
-              type: 'SQUAD_DESTROYED',
-              message: `Escuadra destruida: ${sq.name} — sin personal activo`,
-              squadId: sq.id,
-            })
-          }
-        }
-      }
-    }),
-
-    setPersonnelStatus: (id, status, note = '') => set(s => {
-      const p = s.personnel.find(x => x.id === id)
-      if (!p) return
-      p.history.push({ from: p.status, to: status, at: ts(), note })
-      p.status = status
-      // Check squad destruction
-      if (p.squadId) {
-        const sq = s.squads.find(x => x.id === p.squadId)
-        if (sq && sq.status !== 'DESTROYED') {
-          const activeCount = s.personnel.filter(
-            per => sq.personnelIds.includes(per.id) && per.status === 'ACTIVE'
-          ).length
-          if (activeCount === 0 && sq.personnelIds.length > 0) {
-            sq.status = 'DESTROYED'
-            get().addEvent({
-              type: 'SQUAD_DESTROYED',
-              message: `Escuadra destruida: ${sq.name} — sin personal activo`,
-              squadId: sq.id,
-            })
-          }
-        }
-      }
-    }),
-
-    assignPersonnelToSquad: (personnelId, squadId) => set(s => {
-      s.squads.forEach(sq => { sq.personnelIds = sq.personnelIds.filter(id => id !== personnelId) })
+    // Apply combat casualties directly to squadSize
+    applySquadCasualties: (squadId, casualties) => set(s => {
       const sq = s.squads.find(x => x.id === squadId)
-      if (sq && !sq.personnelIds.includes(personnelId)) sq.personnelIds.push(personnelId)
-      const p = s.personnel.find(x => x.id === personnelId)
-      if (p) p.squadId = squadId
-      // Revive DESTROYED squad if someone is assigned back and is ACTIVE
-      if (sq && sq.status === 'DESTROYED') {
-        const activeCount = s.personnel.filter(
-          per => sq.personnelIds.includes(per.id) && per.status === 'ACTIVE'
-        ).length
-        if (activeCount > 0) sq.status = 'ACTIVE'
+      if (!sq) return
+      const newSize = Math.max(0, (sq.squadSize ?? 0) - casualties)
+      sq.squadSize = newSize
+      if (newSize <= 0 && sq.status !== 'DESTROYED') {
+        sq.status = 'DESTROYED'
+        get().addEvent({
+          type:    'SQUAD_DESTROYED',
+          message: `Escuadra destruida: ${sq.name} — sin efectivos`,
+          squadId: sq.id,
+        })
       }
     }),
 
@@ -243,13 +172,12 @@ const useStore = create(
 
     addVehicle: (data) => set(s => {
       const v = {
-        id: uuid(),
-        name: data.name || 'Vehículo',
-        category: data.category || 'LAND',  // LAND | AIR
-        subtype: data.subtype || 'APC',
-        // Modular components: { categoryKey: componentId }
-        components: data.components || {},
-        // Derived stats (calculated from components)
+        id:          uuid(),
+        name:        data.name     || 'Vehículo',
+        category:    data.category || 'LAND',
+        subtype:     data.subtype  || 'APC',
+        components:  data.components || {},
+        // Derived stats (from components)
         armor:       data.armor       ?? 0,
         firepower:   data.firepower   ?? 0,
         mobility:    data.mobility    ?? 0,
@@ -258,15 +186,15 @@ const useStore = create(
         stealth:     data.stealth     ?? 0,
         capacity:    data.capacity    ?? 0,
         // Operational
-        crewSize:   data.crewSize   ?? 2,
-        health:     data.health     ?? 100,
-        fuel:       data.fuel       ?? 100,
-        ammo:       data.ammo       ?? 100,
-        status:     data.status     || 'OPERATIONAL',
-        squadId:    data.squadId    || null,
-        damageLog:  [],   // [{at, component, description, healthBefore, healthAfter}]
-        history:    [],   // [{from, to, at}]
-        createdAt:  ts(),
+        crewSize: data.crewSize ?? 2,
+        health:   data.health   ?? 100,
+        fuel:     data.fuel     ?? 100,
+        ammo:     data.ammo     ?? 100,
+        status:   data.status   || 'OPERATIONAL',
+        squadId:  data.squadId  || null,
+        damageLog: [],
+        history:   [],
+        createdAt: ts(),
       }
       s.vehicles.push(v)
       if (v.squadId) {
@@ -281,31 +209,26 @@ const useStore = create(
       const oldStatus = v.status
       const oldHealth = v.health
       Object.assign(v, patch)
-      // Log status changes
       if (patch.status && patch.status !== oldStatus) {
         v.history.push({ from: oldStatus, to: patch.status, at: ts() })
       }
-      // Log damage when health decreases
       if (patch.health !== undefined && patch.health < oldHealth) {
         v.damageLog.push({
           at: ts(),
           healthBefore: oldHealth,
           healthAfter: patch.health,
-          component: patch.damagedComponent || 'General',
+          component:   patch.damagedComponent  || 'General',
           description: patch.damageDescription || 'Daño recibido en combate',
         })
       }
     }),
 
-    // Record damage explicitly
     recordVehicleDamage: (id, { component, description, healthLost }) => set(s => {
       const v = s.vehicles.find(x => x.id === id)
       if (!v) return
       const newHealth = Math.max(0, v.health - (healthLost || 0))
       v.damageLog.push({
-        at: ts(),
-        healthBefore: v.health,
-        healthAfter: newHealth,
+        at: ts(), healthBefore: v.health, healthAfter: newHealth,
         component: component || 'General',
         description: description || 'Daño recibido',
       })
@@ -334,11 +257,10 @@ const useStore = create(
 
     addVessel: (data) => set(s => {
       const v = {
-        id: uuid(),
-        name: data.name || 'Embarcación',
-        subtype: data.subtype || 'PATROL_BOAT',
-        components: data.components || {},
-        // Derived stats
+        id:          uuid(),
+        name:        data.name    || 'Embarcación',
+        subtype:     data.subtype || 'PATROL_BOAT',
+        components:  data.components || {},
         armor:       data.armor       ?? 0,
         firepower:   data.firepower   ?? 0,
         mobility:    data.mobility    ?? 0,
@@ -346,21 +268,20 @@ const useStore = create(
         range:       data.range       ?? 0,
         stealth:     data.stealth     ?? 0,
         capacity:    data.capacity    ?? 0,
-        // Operational
-        crewSize:   data.crewSize   ?? 10,
-        health:     data.health     ?? 100,
-        fuel:       data.fuel       ?? 100,
-        ammo:       data.ammo       ?? 100,
-        status:     data.status     || 'OPERATIONAL',
-        nationId:   data.nationId   || null,
-        damageLog:  [],
-        history:    [],
-        createdAt:  ts(),
+        crewSize: data.crewSize ?? 10,
+        health:   data.health   ?? 100,
+        fuel:     data.fuel     ?? 100,
+        ammo:     data.ammo     ?? 100,
+        status:   data.status   || 'OPERATIONAL',
+        nationId: data.nationId || null,
+        damageLog: [],
+        history:   [],
+        createdAt: ts(),
       }
       s.vessels.push(v)
       get().addEvent({
-        type: 'VESSEL_CREATED',
-        message: `Embarcación creada: ${v.name}`,
+        type:     'VESSEL_CREATED',
+        message:  `Embarcación creada: ${v.name}`,
         nationId: v.nationId,
       })
     }),
@@ -376,10 +297,8 @@ const useStore = create(
       }
       if (patch.health !== undefined && patch.health < oldHealth) {
         v.damageLog.push({
-          at: ts(),
-          healthBefore: oldHealth,
-          healthAfter: patch.health,
-          component: patch.damagedComponent || 'General',
+          at: ts(), healthBefore: oldHealth, healthAfter: patch.health,
+          component:   patch.damagedComponent  || 'General',
           description: patch.damageDescription || 'Daño recibido',
         })
       }
@@ -390,9 +309,7 @@ const useStore = create(
       if (!v) return
       const newHealth = Math.max(0, v.health - (healthLost || 0))
       v.damageLog.push({
-        at: ts(),
-        healthBefore: v.health,
-        healthAfter: newHealth,
+        at: ts(), healthBefore: v.health, healthAfter: newHealth,
         component: component || 'General',
         description: description || 'Daño recibido',
       })
@@ -411,9 +328,8 @@ const useStore = create(
     // ── Battles ───────────────────────────────────────────────────────────
     battles: [],
 
-    addBattle: (battle) => set(s => { s.battles.push(battle) }),
-
-    updateBattle: (id, patch) => set(s => {
+    addBattle:    (battle)      => set(s => { s.battles.push(battle) }),
+    updateBattle: (id, patch)   => set(s => {
       const b = s.battles.find(x => x.id === id)
       if (b) Object.assign(b, patch)
     }),
@@ -425,7 +341,7 @@ const useStore = create(
       b.overrides.push({ ...override, at: ts() })
       if (override.result) Object.assign(b.result, override.result)
       get().addEvent({
-        type: 'BATTLE_OVERRIDE',
+        type:    'BATTLE_OVERRIDE',
         message: `Override manual aplicado a batalla: ${b.id}`,
         battleId: id,
       })
@@ -436,14 +352,14 @@ const useStore = create(
 
     addEvent: (data) => set(s => {
       s.events.unshift({
-        id: uuid(),
-        type: data.type || 'INFO',
-        message: data.message || '',
+        id:       uuid(),
+        type:     data.type     || 'INFO',
+        message:  data.message  || '',
         nationId: data.nationId || null,
-        squadId: data.squadId || null,
+        squadId:  data.squadId  || null,
         battleId: data.battleId || null,
-        turn: get().currentTurn,
-        at: ts(),
+        turn:     get().currentTurn,
+        at:       ts(),
       })
       if (s.events.length > 1000) s.events = s.events.slice(0, 1000)
     }),
@@ -454,18 +370,17 @@ const useStore = create(
     exportCampaign: () => {
       const s = get()
       return JSON.stringify({
-        version: '1.1',
-        exportedAt: ts(),
+        version:      '1.2',
+        exportedAt:   ts(),
         campaignName: s.campaignName,
-        currentTurn: s.currentTurn,
-        rules:     s.rules,
-        nations:   s.nations,
-        squads:    s.squads,
-        personnel: s.personnel,
-        vehicles:  s.vehicles,
-        vessels:   s.vessels,
-        battles:   s.battles,
-        events:    s.events,
+        currentTurn:  s.currentTurn,
+        rules:        s.rules,
+        nations:      s.nations,
+        squads:       s.squads,
+        vehicles:     s.vehicles,
+        vessels:      s.vessels,
+        battles:      s.battles,
+        events:       s.events,
       }, null, 2)
     },
 
@@ -478,7 +393,6 @@ const useStore = create(
           if (data.rules)        s.rules        = data.rules
           if (data.nations)      s.nations      = data.nations
           if (data.squads)       s.squads       = data.squads
-          if (data.personnel)    s.personnel    = data.personnel
           if (data.vehicles)     s.vehicles     = data.vehicles
           if (data.vessels)      s.vessels      = data.vessels
           if (data.battles)      s.battles      = data.battles
@@ -491,16 +405,15 @@ const useStore = create(
     },
 
     resetCampaign: () => set(s => {
-      s.nations    = []
-      s.squads     = []
-      s.personnel  = []
-      s.vehicles   = []
-      s.vessels    = []
-      s.battles    = []
-      s.events     = []
-      s.currentTurn = 1
+      s.nations      = []
+      s.squads       = []
+      s.vehicles     = []
+      s.vessels      = []
+      s.battles      = []
+      s.events       = []
+      s.currentTurn  = 1
       s.campaignName = 'New Campaign'
-      s.rules = { ...DEFAULT_RULES }
+      s.rules        = { ...DEFAULT_RULES }
     }),
 
   }))

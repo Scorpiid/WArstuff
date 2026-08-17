@@ -50,8 +50,8 @@ function calcBasePower(squad, vehicles, rules) {
     ? (1 - rules.suppression.combatPenalty)
     : 1
 
-  // Active personnel count
-  const activeCount = squad.personnelIds?.length ?? 10
+  // Active personnel count — uses squadSize directly
+  const activeCount = squad.squadSize ?? squad.personnelIds?.length ?? 10
   const basePower = (squad.combat ?? 70) + activeCount * 0.5
 
   const vehiclePower = calcVehiclePower(vehicles, rules)
@@ -283,7 +283,7 @@ export function simulateBattle(config, rules) {
     morale: aSquad.morale ?? 80,
     fatigue: aSquad.fatigue ?? 10,
     suppression: aSquad.suppression ?? 0,
-    activeCount: aSquad.personnelIds?.length || 10,
+    activeCount: aSquad.squadSize ?? aSquad.personnelIds?.length ?? 10,
   }
   let dState = {
     squad: dSquad,
@@ -291,7 +291,7 @@ export function simulateBattle(config, rules) {
     morale: dSquad.morale ?? 80,
     fatigue: dSquad.fatigue ?? 10,
     suppression: dSquad.suppression ?? 0,
-    activeCount: dSquad.personnelIds?.length || 10,
+    activeCount: dSquad.squadSize ?? dSquad.personnelIds?.length ?? 10,
   }
 
   let endCondition = { ended: false }

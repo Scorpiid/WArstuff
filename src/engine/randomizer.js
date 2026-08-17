@@ -235,8 +235,7 @@ export function generateRandomSquad(tierKey, nationId = null) {
     fuel:        roll(tierKey === 'recruit' ? 50 : tierKey === 'soldier' ? 65 : 80, 100),
     commsEquip:  roll(tierKey === 'recruit' ? 40 : tierKey === 'soldier' ? 60 : 75, 100),
     // Meta
-    personnelIds: [],
-    vehicleIds:   [],
+    vehicleIds:     [],
     _generatedTier: tierKey,
   }
 }
