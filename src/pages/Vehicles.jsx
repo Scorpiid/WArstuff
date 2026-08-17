@@ -58,7 +58,16 @@ function StatGrid({ stats, compact = false }) {
 // ─── Component selector panel ─────────────────────────────────────────────────
 function ComponentSelector({ catalog, selected, onChange, lang }) {
   const [activeCategory, setActiveCategory] = useState(Object.keys(catalog)[0])
-  const cat = catalog[activeCategory]
+
+  // When catalog changes (LAND ↔ AIR switch), reset to first valid category
+  const validKeys   = Object.keys(catalog)
+  const safeCat     = validKeys.includes(activeCategory) ? activeCategory : validKeys[0]
+  const cat         = catalog[safeCat]
+
+  // Keep state in sync silently
+  if (safeCat !== activeCategory) {
+    setActiveCategory(safeCat)
+  }
 
   return (
     <div className="border border-border-col rounded overflow-hidden">
@@ -70,7 +79,7 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
             type="button"
             onClick={() => setActiveCategory(key)}
             className={`px-3 py-2 text-xs font-display font-semibold tracking-wide shrink-0 transition-colors border-r border-border-col last:border-0
-              ${activeCategory === key
+              ${safeCat === key
                 ? 'bg-signal/15 text-signal'
                 : 'text-text-muted hover:text-text-primary hover:bg-surface'
               }`}
@@ -83,13 +92,12 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
 
       {/* Options grid */}
       <div className="p-3 grid grid-cols-1 gap-1.5 max-h-64 overflow-y-auto">
-        {/* None option for optional categories */}
         {cat.optional && (
           <button
             type="button"
-            onClick={() => onChange(activeCategory, null)}
+            onClick={() => onChange(safeCat, null)}
             className={`text-left p-2 rounded border text-xs transition-colors
-              ${!selected[activeCategory]
+              ${!selected[safeCat]
                 ? 'bg-surface-2 border-signal/40 text-signal'
                 : 'border-border-col text-text-muted hover:border-border-col/80'
               }`}
@@ -100,7 +108,7 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
           </button>
         )}
         {cat.options.map(opt => {
-          const isSelected = selected[activeCategory] === opt.id
+          const isSelected = selected[safeCat] === opt.id
           const preview = Object.entries(opt.stats)
             .map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${k}`)
             .join(', ')
@@ -108,7 +116,7 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
             <button
               type="button"
               key={opt.id}
-              onClick={() => onChange(activeCategory, opt.id)}
+              onClick={() => onChange(safeCat, opt.id)}
               className={`text-left p-2.5 rounded border transition-all
                 ${isSelected
                   ? 'bg-signal/10 border-signal/50 text-text-primary'
@@ -135,12 +143,12 @@ function ComponentSelector({ catalog, selected, onChange, lang }) {
       </div>
 
       {/* Selected component summary */}
-      {selected[activeCategory] && (
+      {selected[safeCat] && (
         <div className="border-t border-border-col px-3 py-2 bg-signal/5 flex items-center gap-2">
           <span className="text-signal text-xs">✓</span>
           <span className="text-xs text-signal font-mono">
             {(() => {
-              const comp = findComponent(catalog, selected[activeCategory])
+              const comp = findComponent(catalog, selected[safeCat])
               return comp ? (lang === 'en' ? comp.nameEn : comp.name) : ''
             })()}
           </span>
