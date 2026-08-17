@@ -6,6 +6,7 @@ import Nations      from './pages/Nations'
 import Squads       from './pages/Squads'
 import Personnel    from './pages/Personnel'
 import Vehicles     from './pages/Vehicles'
+import Vessels      from './pages/Vessels'
 import BattleSim    from './pages/BattleSim'
 import Battles      from './pages/Battles'
 import EventLog     from './pages/EventLog'
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/squads"    element={<Squads />} />
             <Route path="/personnel" element={<Personnel />} />
             <Route path="/vehicles"  element={<Vehicles />} />
+            <Route path="/vessels"   element={<Vessels />} />
             <Route path="/battle"    element={<BattleSim />} />
             <Route path="/battles"   element={<Battles />} />
             <Route path="/log"       element={<EventLog />} />

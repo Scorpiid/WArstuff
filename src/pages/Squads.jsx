@@ -153,8 +153,47 @@ function DerivedPanel({ squad, vehicles, rules }) {
   )
 }
 
+function PersonnelCounter({ squad, personnel, lang }) {
+  const total    = squad.personnelIds?.length || 0
+  const active   = personnel.filter(p => squad.personnelIds?.includes(p.id) && p.status === 'ACTIVE').length
+  const wounded  = personnel.filter(p => squad.personnelIds?.includes(p.id) && p.status === 'WOUNDED').length
+  const dead     = personnel.filter(p => squad.personnelIds?.includes(p.id) && p.status === 'KILLED').length
+  const captured = personnel.filter(p => squad.personnelIds?.includes(p.id) && p.status === 'CAPTURED').length
+
+  if (total === 0) return <span className="font-mono text-text-muted text-xs">—</span>
+
+  const pct = total > 0 ? (active / total) * 100 : 0
+  const barColor = pct > 60 ? 'bg-safe' : pct > 30 ? 'bg-warn' : pct > 0 ? 'bg-danger' : 'bg-text-muted'
+
+  return (
+    <div className="min-w-[80px]">
+      <div className="flex items-baseline gap-1 mb-0.5">
+        <span className={`font-mono text-sm font-medium ${active === 0 ? 'text-danger' : active < total * 0.3 ? 'text-danger' : active < total * 0.6 ? 'text-warn' : 'text-safe'}`}>
+          {active}
+        </span>
+        <span className="font-mono text-text-muted text-xs">/{total}</span>
+        {active === 0 && total > 0 && (
+          <span className="text-danger text-stat ml-1">☠</span>
+        )}
+      </div>
+      {/* Mini bar */}
+      <div className="w-full h-1 bg-border-col rounded-full overflow-hidden">
+        <div className={`h-1 ${barColor} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      {/* Casualties tooltip row */}
+      {(wounded > 0 || dead > 0 || captured > 0) && (
+        <div className="flex gap-1.5 mt-0.5">
+          {wounded  > 0 && <span className="text-warn text-stat font-mono">⚕{wounded}</span>}
+          {dead     > 0 && <span className="text-danger text-stat font-mono">☠{dead}</span>}
+          {captured > 0 && <span className="text-signal text-stat font-mono">⛓{captured}</span>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SquadRow({ squad, nation, personnel, vehicles, rules, onEdit, onDelete }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const s = t.squads
   const [expanded, setExpanded] = useState(false)
   const STAT_KEYS = [
@@ -167,14 +206,21 @@ function SquadRow({ squad, nation, personnel, vehicles, rules, onEdit, onDelete 
   ]
   const activePersonnel = personnel.filter(p => squad.personnelIds?.includes(p.id) && p.status === 'ACTIVE')
   const squadVehicles   = vehicles.filter(v => squad.vehicleIds?.includes(v.id))
+  const isDestroyed     = squad.status === 'DESTROYED'
+
   return (
     <>
-      <tr className="cursor-pointer" onClick={() => setExpanded(e => !e)}>
+      <tr
+        className={`cursor-pointer transition-colors ${isDestroyed ? 'opacity-50' : 'hover:bg-surface-2/40'}`}
+        onClick={() => setExpanded(e => !e)}
+      >
         <td>
           <div className="flex items-center gap-2">
             <span className="text-border-col text-xs">{expanded ? '▼' : '▶'}</span>
             <div>
-              <div className="font-display font-semibold">{squad.name}</div>
+              <div className={`font-display font-semibold ${isDestroyed ? 'line-through text-text-muted' : ''}`}>
+                {squad.name}
+              </div>
               {squad.commander && <div className="text-text-muted text-xs">{squad.commander}</div>}
             </div>
           </div>
@@ -184,7 +230,7 @@ function SquadRow({ squad, nation, personnel, vehicles, rules, onEdit, onDelete 
         <td><span className="font-mono text-signal">{squad.combat ?? 70}</span></td>
         <td><span className="font-mono">{squad.morale ?? 80}</span></td>
         <td><span className={`font-mono ${squad.fatigue > 70 ? 'text-danger' : squad.fatigue > 40 ? 'text-warn' : 'text-safe'}`}>{squad.fatigue ?? 10}</span></td>
-        <td><span className="font-mono text-text-muted">{activePersonnel.length}</span></td>
+        <td><PersonnelCounter squad={squad} personnel={personnel} lang={lang} /></td>
         <td><StatusBadge status={squad.status} /></td>
         <td>
           <div className="flex gap-1">
