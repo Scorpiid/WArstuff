@@ -1,21 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import useStore from '../store/useStore'
-
-const NAV_ITEMS = [
-  { to: '/',           icon: '▣', label: 'Dashboard' },
-  { to: '/nations',    icon: '◈', label: 'Naciones' },
-  { to: '/squads',     icon: '◆', label: 'Escuadras' },
-  { to: '/personnel',  icon: '◉', label: 'Personal' },
-  { to: '/vehicles',   icon: '◧', label: 'Vehículos' },
-  { to: '/battle',     icon: '⚔', label: 'Simulador' },
-  { to: '/battles',    icon: '◎', label: 'Batallas' },
-  { to: '/log',        icon: '≡', label: 'Registro' },
-  { to: '/rules',      icon: '⚙', label: 'Reglas' },
-  { to: '/stats',      icon: '◈', label: 'Estadísticas' },
-  { to: '/settings',   icon: '↓', label: 'Guardar/Cargar' },
-]
+import { useT } from '../i18n/LanguageContext'
 
 export default function Sidebar() {
+  const { t, lang, toggle } = useT()
   const campaignName = useStore(s => s.campaignName)
   const currentTurn  = useStore(s => s.currentTurn)
   const battles      = useStore(s => s.battles)
@@ -23,21 +11,35 @@ export default function Sidebar() {
 
   const ongoingBattles = battles.filter(b => b.status === 'IN_PROGRESS').length
 
+  const NAV_ITEMS = [
+    { to: '/',           icon: '▣', label: t.nav.dashboard },
+    { to: '/nations',    icon: '◈', label: t.nav.nations },
+    { to: '/squads',     icon: '◆', label: t.nav.squads },
+    { to: '/personnel',  icon: '◉', label: t.nav.personnel },
+    { to: '/vehicles',   icon: '◧', label: t.nav.vehicles },
+    { to: '/battle',     icon: '⚔', label: t.nav.simulator },
+    { to: '/battles',    icon: '◎', label: t.nav.battles },
+    { to: '/log',        icon: '≡', label: t.nav.log },
+    { to: '/rules',      icon: '⚙', label: t.nav.rules },
+    { to: '/stats',      icon: '◈', label: t.nav.statistics },
+    { to: '/settings',   icon: '↓', label: t.nav.saveLoad },
+  ]
+
   return (
     <aside className="w-56 shrink-0 bg-surface border-r border-border-col flex flex-col h-screen sticky top-0">
       {/* Logo / Campaign */}
       <div className="px-4 py-5 border-b border-border-col">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-signal text-lg">✦</span>
-          <span className="font-display font-bold text-base tracking-widest text-text-primary uppercase">WarSim</span>
+          <span className="font-display font-bold text-base tracking-widest text-text-primary uppercase">{t.appTitle}</span>
         </div>
         <p className="text-text-muted text-xs truncate">{campaignName}</p>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-stat text-text-muted uppercase tracking-widest">Turno</span>
+          <span className="text-stat text-text-muted uppercase tracking-widest">{t.sidebar.turn}</span>
           <span className="font-mono text-signal text-xs font-medium">{currentTurn}</span>
           {ongoingBattles > 0 && (
             <span className="ml-auto badge bg-danger/20 text-danger border border-danger/30 text-stat">
-              {ongoingBattles} batalla{ongoingBattles > 1 ? 's' : ''}
+              {ongoingBattles} {ongoingBattles > 1 ? t.sidebar.battles2 : t.sidebar.battle}
             </span>
           )}
         </div>
@@ -64,16 +66,33 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer stats */}
-      <div className="border-t border-border-col px-4 py-3 space-y-1.5">
+      {/* Footer: stats + language toggle */}
+      <div className="border-t border-border-col px-4 py-3 space-y-2">
         <div className="flex justify-between">
-          <span className="text-stat text-text-muted uppercase tracking-widest">Naciones</span>
+          <span className="text-stat text-text-muted uppercase tracking-widest">{t.sidebar.nations}</span>
           <span className="font-mono text-xs text-signal">{nations.length}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-stat text-text-muted uppercase tracking-widest">Batallas</span>
+          <span className="text-stat text-text-muted uppercase tracking-widest">{t.sidebar.battles}</span>
           <span className="font-mono text-xs text-signal">{battles.length}</span>
         </div>
+
+        {/* Language toggle button */}
+        <button
+          onClick={toggle}
+          className="w-full mt-1 flex items-center justify-between px-3 py-2 rounded border border-border-col bg-deep-night hover:border-signal/40 hover:text-signal transition-colors group"
+          title={lang === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-base leading-none">{lang === 'es' ? '🇪🇸' : '🇬🇧'}</span>
+            <span className="font-mono text-xs text-text-muted group-hover:text-signal transition-colors">
+              {lang === 'es' ? 'Español' : 'English'}
+            </span>
+          </div>
+          <span className="font-mono text-stat text-text-muted group-hover:text-signal transition-colors">
+            {lang === 'es' ? '→ EN' : '→ ES'}
+          </span>
+        </button>
       </div>
     </aside>
   )

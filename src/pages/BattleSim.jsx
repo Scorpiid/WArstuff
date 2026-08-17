@@ -6,39 +6,14 @@ import { v4 as uuid } from 'uuid'
 import PageHeader from '../components/PageHeader'
 import FormField from '../components/FormField'
 import StatBar from '../components/StatBar'
+import { useT } from '../i18n/LanguageContext'
 
-const TERRAINS = [
-  { value: 'open',      label: 'Terreno abierto',    modifier: '+10% Atacante' },
-  { value: 'urban',     label: 'Urbano',              modifier: '-15% Atacante' },
-  { value: 'forest',    label: 'Bosque',              modifier: '-10% Atacante' },
-  { value: 'mountain',  label: 'Montaña',             modifier: '-20% Atacante' },
-  { value: 'desert',    label: 'Desierto',            modifier: 'Neutro' },
-  { value: 'jungle',    label: 'Jungla',              modifier: '-25% Atacante' },
-  { value: 'coast',     label: 'Costa',               modifier: '-5% Atacante' },
-  { value: 'fortified', label: 'Posición fortif.',    modifier: '-35% Atacante' },
-]
-
-const BATTLE_MODS = [
-  { value: 'nightOps',       label: 'Operación nocturna' },
-  { value: 'heavyRain',      label: 'Lluvia intensa' },
-  { value: 'airSupport',     label: 'Apoyo aéreo (atacante)' },
-  { value: 'natoLogistics',  label: 'Logística reforzada' },
-  { value: 'encircled',      label: 'Atacante encerrado' },
-  { value: 'surpriseAttack', label: 'Ataque sorpresa' },
-  { value: 'lowAmmo',        label: 'Munición escasa' },
-  { value: 'exhausted',      label: 'Tropa agotada' },
-]
-
-const MODES = [
-  { value: 'SIMPLE',   label: 'Simple',   desc: 'Resolución en 1 ronda' },
-  { value: 'STANDARD', label: 'Estándar', desc: 'Simulación balanceada' },
-  { value: 'DETAILED', label: 'Detallado',desc: 'Registro ronda a ronda completo' },
-]
-
-function SquadPreview({ squad, vehicles, label }) {
+function SquadPreview({ squad, vehicles, label, color }) {
+  const { t } = useT()
+  const b = t.battleSim
   if (!squad) return (
     <div className="card p-4 border-dashed flex items-center justify-center min-h-28">
-      <span className="text-text-muted text-sm">Selecciona una escuadra</span>
+      <span className="text-text-muted text-sm">{b.previewEmpty}</span>
     </div>
   )
   const squadVehicles = vehicles.filter(v => squad.vehicleIds?.includes(v.id) && v.status !== 'DESTROYED')
@@ -46,39 +21,34 @@ function SquadPreview({ squad, vehicles, label }) {
     <div className="card p-4 space-y-2">
       <div className="flex items-center justify-between">
         <span className="font-display font-semibold text-base">{squad.name}</span>
-        <span className={`text-xs font-mono px-2 py-0.5 rounded border ${
-          label === 'ATACANTE'
-            ? 'bg-danger/10 text-danger border-danger/30'
-            : 'bg-safe/10 text-safe border-safe/30'
-        }`}>{label}</span>
+        <span className={`text-xs font-mono px-2 py-0.5 rounded border ${color}`}>{label}</span>
       </div>
-      {squad.commander && <p className="text-text-muted text-xs">Cmd: {squad.commander}</p>}
+      {squad.commander && <p className="text-text-muted text-xs">{b.previewCmd} {squad.commander}</p>}
       <div className="space-y-1.5">
-        <StatBar label="Combate"      value={squad.combat ?? 70} />
-        <StatBar label="Moral"        value={squad.morale ?? 80} />
-        <StatBar label="Experiencia"  value={squad.experience ?? 60} />
-        <StatBar label="Fatiga"       value={squad.fatigue ?? 10} color="warn" />
+        <StatBar label={b.statCombat}     value={squad.combat     ?? 70} />
+        <StatBar label={b.statMorale}     value={squad.morale     ?? 80} />
+        <StatBar label={b.statExperience} value={squad.experience ?? 60} />
+        <StatBar label={b.statFatigue}    value={squad.fatigue    ?? 10} color="warn" />
       </div>
       <div className="text-xs text-text-muted border-t border-border-col/50 pt-2 flex justify-between">
-        <span>Personal activo: {squad.personnelIds?.length || 0}</span>
-        <span>Vehículos: {squadVehicles.length}</span>
+        <span>{b.previewPersonnel.replace('{n}', squad.personnelIds?.length || 0)}</span>
+        <span>{b.previewVehicles.replace('{n}', squadVehicles.length)}</span>
       </div>
     </div>
   )
 }
 
-function PhaseResult({ phase, data }) {
-  const icons = { DETECTION: '◉', INITIATIVE: '⚡', SETUP: '◈' }
+function PhaseResult({ phaseLabel, data }) {
   return (
     <div className="panel">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-signal">{icons[phase]}</span>
-        <h3 className="font-display font-semibold tracking-wide">{phase}</h3>
+        <span className="text-signal">◉</span>
+        <h3 className="font-display font-semibold tracking-wide">{phaseLabel}</h3>
       </div>
       <div className="space-y-1">
         {Object.entries(data).map(([k, v]) => (
           <div key={k} className="flex justify-between items-center">
-            <span className="label mb-0 capitalize">{k.replace(/([A-Z])/g, ' $1').toLowerCase()}</span>
+            <span className="label mb-0 capitalize">{k}</span>
             <span className="font-mono text-xs text-signal">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
           </div>
         ))}
@@ -87,24 +57,20 @@ function PhaseResult({ phase, data }) {
   )
 }
 
-function RoundCard({ round, expanded, onToggle }) {
+function RoundCard({ round, b, expanded, onToggle }) {
   const aWon = round.roundWinner === 'ATTACKER'
+  const winLabel = round.roundWinner === 'DRAW' ? b.resultDraw : aWon ? b.resultWinAttacker : b.resultWinDefender
   return (
     <div className="border border-border-col rounded">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-2 hover:bg-surface-2 transition-colors"
-      >
+      <button onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-2 hover:bg-surface-2 transition-colors">
         <div className="flex items-center gap-3">
-          <span className="font-display font-semibold text-signal">Ronda {round.roundNum}</span>
+          <span className="font-display font-semibold text-signal">{b.roundLabel.replace('{n}', round.roundNum)}</span>
           <span className={`text-xs font-mono px-2 py-0.5 rounded border ${
-            round.roundWinner === 'DRAW'
-              ? 'border-text-muted/30 text-text-muted bg-surface-2'
+            round.roundWinner === 'DRAW' ? 'border-text-muted/30 text-text-muted bg-surface-2'
               : aWon ? 'border-danger/30 text-danger bg-danger/10'
               : 'border-safe/30 text-safe bg-safe/10'
-          }`}>
-            {round.roundWinner === 'DRAW' ? 'EMPATE' : aWon ? 'VICTORIA ATACANTE' : 'VICTORIA DEFENSOR'}
-          </span>
+          }`}>{winLabel}</span>
         </div>
         <div className="flex gap-4 text-xs font-mono">
           <span className="text-danger">A: {round.attacker.killed}☠ {round.attacker.wounded}⚕</span>
@@ -115,24 +81,24 @@ function RoundCard({ round, expanded, onToggle }) {
       {expanded && (
         <div className="px-4 pb-3 border-t border-border-col/50 grid grid-cols-2 gap-4 pt-3">
           {[
-            { label: 'ATACANTE', data: round.attacker, power: round.attackerPower, color: 'danger' },
-            { label: 'DEFENSOR', data: round.defender, power: round.defenderPower, color: 'safe' },
+            { label: b.badgeAttacker, data: round.attacker, power: round.attackerPower, color: 'danger' },
+            { label: b.badgeDefender, data: round.defender, power: round.defenderPower, color: 'safe' },
           ].map(({ label, data, power, color }) => (
             <div key={label}>
               <p className={`font-display font-semibold text-sm text-${color} mb-2`}>{label}</p>
               <div className="space-y-0.5 font-mono text-xs">
-                <div className="flex justify-between"><span className="text-text-muted">Poder efectivo</span><span className="text-signal">{power}</span></div>
-                <div className="flex justify-between"><span className="text-text-muted">Bajas (muertos)</span><span className="text-danger">{data.killed}</span></div>
-                <div className="flex justify-between"><span className="text-text-muted">Heridos</span><span className="text-warn">{data.wounded}</span></div>
-                <div className="flex justify-between"><span className="text-text-muted">Capturados</span><span className="text-signal">{data.captured}</span></div>
-                <div className="flex justify-between"><span className="text-text-muted">Moral</span>
+                <div className="flex justify-between"><span className="text-text-muted">{b.effectivePower}</span><span className="text-signal">{power}</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.casualtiesKilled}</span><span className="text-danger">{data.killed}</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.wounded}</span><span className="text-warn">{data.wounded}</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.captured}</span><span className="text-signal">{data.captured}</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.statMorale}</span>
                   <span className={data.moraleChange >= 0 ? 'text-safe' : 'text-danger'}>
                     {data.moraleAfter} ({data.moraleChange >= 0 ? '+' : ''}{data.moraleChange})
                   </span>
                 </div>
-                <div className="flex justify-between"><span className="text-text-muted">Fatiga</span><span className="text-warn">{data.fatigueAfter}</span></div>
-                <div className="flex justify-between"><span className="text-text-muted">Supresión</span><span className="text-warn">{data.suppressionAfter}%</span></div>
-                <div className="flex justify-between"><span className="text-text-muted">Activos</span><span className="text-text-primary">{data.activeCountAfter}</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.statFatigue}</span><span className="text-warn">{data.fatigueAfter}</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.suppression}</span><span className="text-warn">{data.suppressionAfter}%</span></div>
+                <div className="flex justify-between"><span className="text-text-muted">{b.active}</span><span className="text-text-primary">{data.activeCountAfter}</span></div>
               </div>
             </div>
           ))}
@@ -142,37 +108,31 @@ function RoundCard({ round, expanded, onToggle }) {
   )
 }
 
-function BattleResultBanner({ result, attackerSquad, defenderSquad }) {
+function BattleResultBanner({ result, attackerSquad, defenderSquad, b }) {
   const { winner, reason, attacker, defender } = result
   const aWon = winner === 'ATTACKER'
   const draw  = winner === 'DRAW'
+  const winLabel = draw ? b.resultDraw : aWon ? b.resultWinAttacker : b.resultWinDefender
 
   return (
-    <div className={`rounded border p-5 ${
-      draw   ? 'border-text-muted/30 bg-surface-2' :
-      aWon   ? 'border-danger/30 bg-danger/5' :
-               'border-safe/30 bg-safe/5'
-    }`}>
+    <div className={`rounded border p-5 ${draw ? 'border-text-muted/30 bg-surface-2' : aWon ? 'border-danger/30 bg-danger/5' : 'border-safe/30 bg-safe/5'}`}>
       <div className="text-center mb-4">
-        <div className={`font-display font-bold text-3xl tracking-widest ${draw ? 'text-text-muted' : aWon ? 'text-danger' : 'text-safe'}`}>
-          {draw ? 'EMPATE' : aWon ? 'VICTORIA ATACANTE' : 'VICTORIA DEFENSOR'}
-        </div>
+        <div className={`font-display font-bold text-3xl tracking-widest ${draw ? 'text-text-muted' : aWon ? 'text-danger' : 'text-safe'}`}>{winLabel}</div>
         <div className="text-text-muted text-xs mt-1 uppercase tracking-widest">{reason?.replace(/_/g, ' ')}</div>
       </div>
-
       <div className="grid grid-cols-2 gap-6">
         {[
-          { label: attackerSquad?.name || 'Atacante', data: attacker, color: 'danger' },
-          { label: defenderSquad?.name || 'Defensor', data: defender, color: 'safe' },
+          { label: attackerSquad?.name || b.badgeAttacker, data: attacker, color: 'danger' },
+          { label: defenderSquad?.name || b.badgeDefender, data: defender, color: 'safe' },
         ].map(({ label, data, color }) => (
           <div key={label} className="space-y-2">
             <h4 className={`font-display font-semibold text-${color}`}>{label}</h4>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Muertos',   val: data.killed,    col: 'text-danger' },
-                { label: 'Heridos',   val: data.wounded,   col: 'text-warn' },
-                { label: 'Capturados',val: data.captured,  col: 'text-signal' },
-                { label: 'Restantes', val: data.remaining, col: 'text-text-primary' },
+                { label: b.killed,    val: data.killed,    col: 'text-danger' },
+                { label: b.wounded,   val: data.wounded,   col: 'text-warn' },
+                { label: b.captured,  val: data.captured,  col: 'text-signal' },
+                { label: b.remaining, val: data.remaining, col: 'text-text-primary' },
               ].map(({ label: l, val, col }) => (
                 <div key={l} className="bg-deep-night border border-border-col/50 rounded p-2 text-center">
                   <div className={`font-mono text-lg font-medium ${col}`}>{val}</div>
@@ -182,16 +142,12 @@ function BattleResultBanner({ result, attackerSquad, defenderSquad }) {
             </div>
             <div className="space-y-1 text-xs font-mono">
               <div className="flex justify-between">
-                <span className="text-text-muted">Moral final</span>
-                <span className={data.finalMorale > 50 ? 'text-safe' : data.finalMorale > 25 ? 'text-warn' : 'text-danger'}>
-                  {data.finalMorale}
-                </span>
+                <span className="text-text-muted">{b.finalMorale}</span>
+                <span className={data.finalMorale > 50 ? 'text-safe' : data.finalMorale > 25 ? 'text-warn' : 'text-danger'}>{data.finalMorale}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-muted">Fatiga final</span>
-                <span className={data.finalFatigue < 50 ? 'text-safe' : data.finalFatigue < 75 ? 'text-warn' : 'text-danger'}>
-                  {data.finalFatigue}
-                </span>
+                <span className="text-text-muted">{b.finalFatigue}</span>
+                <span className={data.finalFatigue < 50 ? 'text-safe' : data.finalFatigue < 75 ? 'text-warn' : 'text-danger'}>{data.finalFatigue}</span>
               </div>
             </div>
           </div>
@@ -202,29 +158,57 @@ function BattleResultBanner({ result, attackerSquad, defenderSquad }) {
 }
 
 export default function BattleSim() {
-  const navigate   = useNavigate()
-  const squads     = useStore(s => s.squads)
-  const nations    = useStore(s => s.nations)
-  const vehicles   = useStore(s => s.vehicles)
-  const rules      = useStore(s => s.rules)
-  const addBattle  = useStore(s => s.addBattle)
+  const navigate    = useNavigate()
+  const { t }       = useT()
+  const b           = t.battleSim
+  const squads      = useStore(s => s.squads)
+  const nations     = useStore(s => s.nations)
+  const vehicles    = useStore(s => s.vehicles)
+  const rules       = useStore(s => s.rules)
+  const addBattle   = useStore(s => s.addBattle)
   const updateSquad = useStore(s => s.updateSquad)
-  const addEvent   = useStore(s => s.addEvent)
+  const addEvent    = useStore(s => s.addEvent)
 
-  const [attackerId,  setAttackerId]  = useState('')
-  const [defenderId,  setDefenderId]  = useState('')
-  const [terrain,     setTerrain]     = useState('open')
-  const [battleMods,  setBattleMods]  = useState([])
-  const [mode,        setMode]        = useState('STANDARD')
-  const [seed,        setSeed]        = useState(() => Math.random().toString(36).slice(2, 10))
-  const [customSeed,  setCustomSeed]  = useState(false)
-  const [simResult,   setSimResult]   = useState(null)
+  const [attackerId,    setAttackerId]    = useState('')
+  const [defenderId,    setDefenderId]    = useState('')
+  const [terrain,       setTerrain]       = useState('open')
+  const [battleMods,    setBattleMods]    = useState([])
+  const [mode,          setMode]          = useState('STANDARD')
+  const [seed,          setSeed]          = useState(() => Math.random().toString(36).slice(2, 10))
+  const [customSeed,    setCustomSeed]    = useState(false)
+  const [simResult,     setSimResult]     = useState(null)
   const [expandedRound, setExpandedRound] = useState(null)
-  const [simulating,  setSimulating]  = useState(false)
+  const [simulating,    setSimulating]    = useState(false)
   const resultRef = useRef(null)
 
-  const attackerSquad = squads.find(s => s.id === attackerId)
-  const defenderSquad = squads.find(s => s.id === defenderId)
+  const TERRAINS = [
+    { value:'open',      label: b.terrains.open,      modifier: b.terrainMods.open },
+    { value:'urban',     label: b.terrains.urban,     modifier: b.terrainMods.urban },
+    { value:'forest',    label: b.terrains.forest,    modifier: b.terrainMods.forest },
+    { value:'mountain',  label: b.terrains.mountain,  modifier: b.terrainMods.mountain },
+    { value:'desert',    label: b.terrains.desert,    modifier: b.terrainMods.desert },
+    { value:'jungle',    label: b.terrains.jungle,    modifier: b.terrainMods.jungle },
+    { value:'coast',     label: b.terrains.coast,     modifier: b.terrainMods.coast },
+    { value:'fortified', label: b.terrains.fortified, modifier: b.terrainMods.fortified },
+  ]
+  const BATTLE_MODS = [
+    { value:'nightOps',       label: b.battleMods.nightOps },
+    { value:'heavyRain',      label: b.battleMods.heavyRain },
+    { value:'airSupport',     label: b.battleMods.airSupport },
+    { value:'natoLogistics',  label: b.battleMods.natoLogistics },
+    { value:'encircled',      label: b.battleMods.encircled },
+    { value:'surpriseAttack', label: b.battleMods.surpriseAttack },
+    { value:'lowAmmo',        label: b.battleMods.lowAmmo },
+    { value:'exhausted',      label: b.battleMods.exhausted },
+  ]
+  const MODES = [
+    { value:'SIMPLE',   label: b.modes.SIMPLE.label,   desc: b.modes.SIMPLE.desc },
+    { value:'STANDARD', label: b.modes.STANDARD.label, desc: b.modes.STANDARD.desc },
+    { value:'DETAILED', label: b.modes.DETAILED.label, desc: b.modes.DETAILED.desc },
+  ]
+
+  const attackerSquad  = squads.find(s => s.id === attackerId)
+  const defenderSquad  = squads.find(s => s.id === defenderId)
   const attackerNation = nations.find(n => n.id === attackerSquad?.nationId)
   const defenderNation = nations.find(n => n.id === defenderSquad?.nationId)
 
@@ -233,57 +217,20 @@ export default function BattleSim() {
   )
 
   const handleSimulate = () => {
-    if (!attackerSquad || !defenderSquad) return
-    if (attackerId === defenderId) return
-
+    if (!attackerSquad || !defenderSquad || attackerId === defenderId) return
     setSimulating(true)
     setTimeout(() => {
-      const attackerVehicles = vehicles.filter(v => attackerSquad.vehicleIds?.includes(v.id) && v.status !== 'DESTROYED')
-      const defenderVehicles = vehicles.filter(v => defenderSquad.vehicleIds?.includes(v.id) && v.status !== 'DESTROYED')
-
-      const result = simulateBattle({
-        attackerSquad,
-        defenderSquad,
-        attackerVehicles,
-        defenderVehicles,
-        attackerNation,
-        defenderNation,
-        terrain,
-        battleModifiers: battleMods,
-        mode,
-        seed,
-      }, rules)
-
-      // Persist battle
+      const aVehicles = vehicles.filter(v => attackerSquad.vehicleIds?.includes(v.id) && v.status !== 'DESTROYED')
+      const dVehicles = vehicles.filter(v => defenderSquad.vehicleIds?.includes(v.id) && v.status !== 'DESTROYED')
+      const result = simulateBattle({ attackerSquad, defenderSquad, attackerVehicles: aVehicles, defenderVehicles: dVehicles, attackerNation, defenderNation, terrain, battleModifiers: battleMods, mode, seed }, rules)
       addBattle(result)
-
-      // Apply results back to squads
-      const aResult = result.result.attacker
-      const dResult = result.result.defender
-      updateSquad(attackerSquad.id, {
-        morale:  aResult.finalMorale,
-        fatigue: aResult.finalFatigue,
-        suppression: aResult.finalSuppression,
-      })
-      updateSquad(defenderSquad.id, {
-        morale:  dResult.finalMorale,
-        fatigue: dResult.finalFatigue,
-        suppression: dResult.finalSuppression,
-      })
-
-      addEvent({
-        type: 'BATTLE_END',
-        message: `Batalla: ${attackerSquad.name} vs ${defenderSquad.name} — ${result.result.winner === 'ATTACKER' ? 'Victoria atacante' : result.result.winner === 'DEFENDER' ? 'Victoria defensor' : 'Empate'} (${result.result.reason?.replace(/_/g, ' ')})`,
-        battleId: result.id,
-      })
-
+      updateSquad(attackerSquad.id, { morale: result.result.attacker.finalMorale, fatigue: result.result.attacker.finalFatigue, suppression: result.result.attacker.finalSuppression })
+      updateSquad(defenderSquad.id, { morale: result.result.defender.finalMorale, fatigue: result.result.defender.finalFatigue, suppression: result.result.defender.finalSuppression })
+      addEvent({ type: 'BATTLE_END', message: `${attackerSquad.name} vs ${defenderSquad.name} — ${result.result.winner} (${result.result.reason?.replace(/_/g, ' ')})`, battleId: result.id })
       setSimResult(result)
       setSimulating(false)
       setExpandedRound(null)
-      // Auto-scroll to result
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-
-      // New seed for next battle
       if (!customSeed) setSeed(Math.random().toString(36).slice(2, 10))
     }, 400)
   }
@@ -292,99 +239,61 @@ export default function BattleSim() {
 
   return (
     <div>
-      <PageHeader
-        title="Simulador de batalla"
-        subtitle="Configura los parámetros y ejecuta la simulación"
-        actions={
-          simResult && (
-            <button className="btn-ghost text-xs" onClick={() => navigate('/battles')}>
-              Ver historial →
-            </button>
-          )
-        }
-      />
+      <PageHeader title={b.title} subtitle={b.subtitle}
+        actions={simResult && <button className="btn-ghost text-xs" onClick={() => navigate('/battles')}>{b.btnHistory}</button>} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* === LEFT: Config panel === */}
+        {/* Config panel */}
         <div className="lg:col-span-1 space-y-4">
-          {/* Squad selection */}
           <div className="card">
-            <div className="card-header">
-              <span className="text-signal">◈</span>
-              <h2 className="font-display font-semibold tracking-wide">Fuerzas</h2>
-            </div>
+            <div className="card-header"><span className="text-signal">◈</span><h2 className="font-display font-semibold tracking-wide">{b.sectionForces}</h2></div>
             <div className="p-4 space-y-3">
-              <FormField label="Escuadra atacante">
+              <FormField label={b.labelAttacker}>
                 <select className="select" value={attackerId} onChange={e => setAttackerId(e.target.value)}>
-                  <option value="">Seleccionar...</option>
+                  <option value="">{b.selectSquad}</option>
                   {squads.filter(s => s.id !== defenderId).map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} {nations.find(n => n.id === s.nationId) ? `(${nations.find(n => n.id === s.nationId).name})` : ''}
-                    </option>
+                    <option key={s.id} value={s.id}>{s.name}{nations.find(n => n.id === s.nationId) ? ` (${nations.find(n => n.id === s.nationId).name})` : ''}</option>
                   ))}
                 </select>
               </FormField>
-              <FormField label="Escuadra defensora">
+              <FormField label={b.labelDefender}>
                 <select className="select" value={defenderId} onChange={e => setDefenderId(e.target.value)}>
-                  <option value="">Seleccionar...</option>
+                  <option value="">{b.selectSquad}</option>
                   {squads.filter(s => s.id !== attackerId).map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} {nations.find(n => n.id === s.nationId) ? `(${nations.find(n => n.id === s.nationId).name})` : ''}
-                    </option>
+                    <option key={s.id} value={s.id}>{s.name}{nations.find(n => n.id === s.nationId) ? ` (${nations.find(n => n.id === s.nationId).name})` : ''}</option>
                   ))}
                 </select>
               </FormField>
             </div>
           </div>
 
-          {/* Terrain */}
           <div className="card">
-            <div className="card-header">
-              <span className="text-signal">◧</span>
-              <h2 className="font-display font-semibold tracking-wide">Terreno</h2>
-            </div>
+            <div className="card-header"><span className="text-signal">◧</span><h2 className="font-display font-semibold tracking-wide">{b.sectionTerrain}</h2></div>
             <div className="p-3 grid grid-cols-2 gap-1">
-              {TERRAINS.map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => setTerrain(t.value)}
-                  className={`text-left px-2 py-2 rounded text-xs transition-colors border ${
-                    terrain === t.value
-                      ? 'bg-signal/15 border-signal/40 text-signal'
-                      : 'bg-deep-night border-border-col text-text-muted hover:border-signal/20'
-                  }`}
-                >
-                  <div className="font-display font-medium">{t.label}</div>
-                  <div className="text-stat opacity-60">{t.modifier}</div>
+              {TERRAINS.map(ter => (
+                <button key={ter.value} onClick={() => setTerrain(ter.value)}
+                  className={`text-left px-2 py-2 rounded text-xs transition-colors border ${terrain === ter.value ? 'bg-signal/15 border-signal/40 text-signal' : 'bg-deep-night border-border-col text-text-muted hover:border-signal/20'}`}>
+                  <div className="font-display font-medium">{ter.label}</div>
+                  <div className="text-stat opacity-60">{ter.modifier}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Battle modifiers */}
           <div className="card">
-            <div className="card-header">
-              <span className="text-signal">⚡</span>
-              <h2 className="font-display font-semibold tracking-wide">Modificadores</h2>
-            </div>
+            <div className="card-header"><span className="text-signal">⚡</span><h2 className="font-display font-semibold tracking-wide">{b.sectionMods}</h2></div>
             <div className="p-3 space-y-1">
               {BATTLE_MODS.map(m => (
                 <label key={m.value} className="flex items-center gap-2 cursor-pointer py-1 hover:bg-surface-2 px-1 rounded">
-                  <input
-                    type="checkbox"
-                    checked={battleMods.includes(m.value)}
-                    onChange={() => toggleMod(m.value)}
-                    className="accent-signal"
-                  />
+                  <input type="checkbox" checked={battleMods.includes(m.value)} onChange={() => toggleMod(m.value)} className="accent-signal" />
                   <span className="text-xs text-text-primary">{m.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Mode & Seed */}
           <div className="card p-4 space-y-3">
-            <FormField label="Modo de simulación">
+            <FormField label={b.labelMode}>
               <div className="space-y-1">
                 {MODES.map(m => (
                   <label key={m.value} className="flex items-center gap-2 cursor-pointer py-1 hover:bg-surface-2 px-1 rounded">
@@ -397,105 +306,68 @@ export default function BattleSim() {
                 ))}
               </div>
             </FormField>
-            <FormField label="Semilla aleatoria">
+            <FormField label={b.labelSeed}>
               <div className="flex gap-2">
-                <input
-                  className="input flex-1"
-                  value={seed}
-                  onChange={e => { setSeed(e.target.value); setCustomSeed(true) }}
-                  placeholder="seed..."
-                />
-                <button
-                  className="btn-secondary px-3"
-                  onClick={() => { setSeed(Math.random().toString(36).slice(2, 10)); setCustomSeed(false) }}
-                  title="Nueva semilla aleatoria"
-                >↺</button>
+                <input className="input flex-1" value={seed} onChange={e => { setSeed(e.target.value); setCustomSeed(true) }} />
+                <button className="btn-secondary px-3" onClick={() => { setSeed(Math.random().toString(36).slice(2, 10)); setCustomSeed(false) }}>↺</button>
               </div>
             </FormField>
           </div>
 
-          {/* Simulate button */}
-          <button
-            onClick={handleSimulate}
-            disabled={!canSimulate}
-            className={`w-full btn text-base py-3 tracking-widest ${canSimulate ? 'btn-primary' : 'bg-surface border border-border-col text-text-muted cursor-not-allowed'}`}
-          >
-            {simulating ? '◌ Simulando...' : '⚔ Simular batalla'}
+          <button onClick={handleSimulate} disabled={!canSimulate}
+            className={`w-full btn text-base py-3 tracking-widest ${canSimulate ? 'btn-primary' : 'bg-surface border border-border-col text-text-muted cursor-not-allowed'}`}>
+            {simulating ? b.btnSimulating : b.btnSimulate}
           </button>
-
-          {attackerId === defenderId && attackerId && (
-            <p className="text-danger text-xs text-center">La misma escuadra no puede combatir contra sí misma.</p>
-          )}
+          {attackerId === defenderId && attackerId && <p className="text-danger text-xs text-center">{b.sameSquadError}</p>}
         </div>
 
-        {/* === RIGHT: Preview + Results === */}
+        {/* Preview + Results */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Squad previews */}
           <div className="grid grid-cols-2 gap-4">
-            <SquadPreview squad={attackerSquad} vehicles={vehicles} label="ATACANTE" />
-            <SquadPreview squad={defenderSquad} vehicles={vehicles} label="DEFENSOR" />
+            <SquadPreview squad={attackerSquad} vehicles={vehicles} label={b.badgeAttacker} color="bg-danger/10 text-danger border-danger/30" />
+            <SquadPreview squad={defenderSquad} vehicles={vehicles} label={b.badgeDefender} color="bg-safe/10 text-safe border-safe/30" />
           </div>
 
-          {/* Results */}
           {simResult && (
             <div ref={resultRef} className="space-y-4">
               <div className="flex items-center gap-3">
-                <h2 className="font-display font-bold text-xl tracking-wide">Resultado de batalla</h2>
+                <h2 className="font-display font-bold text-xl tracking-wide">{b.resultTitle}</h2>
                 <span className="font-mono text-text-muted text-xs">seed: {simResult.seed}</span>
                 <span className="font-mono text-text-muted text-xs">{simResult.mode}</span>
               </div>
-
-              {/* Phases summary */}
               <div className="grid grid-cols-3 gap-3">
-                <PhaseResult phase="DETECTION" data={{
-                  resultado: simResult.phases.detection.outcome,
-                  'recon atacante': simResult.phases.detection.attackerRecon,
-                  'sigilo defensor': simResult.phases.detection.defenderStealth,
+                <PhaseResult phaseLabel={b.phaseDetection} data={{
+                  [b.phaseOutcome]:  simResult.phases.detection.outcome,
+                  [b.phaseReconA]:   simResult.phases.detection.attackerRecon,
+                  [b.phaseStealthD]: simResult.phases.detection.defenderStealth,
                 }} />
-                <PhaseResult phase="INITIATIVE" data={{
-                  'primer turno': simResult.phases.initiative.firstMove,
-                  'puntaje A': simResult.phases.initiative.attackerScore,
-                  'puntaje D': simResult.phases.initiative.defenderScore,
+                <PhaseResult phaseLabel={b.phaseInitiative} data={{
+                  [b.phaseFirst]:  simResult.phases.initiative.firstMove,
+                  [b.phaseScoreA]: simResult.phases.initiative.attackerScore,
+                  [b.phaseScoreD]: simResult.phases.initiative.defenderScore,
                 }} />
-                <PhaseResult phase="SETUP" data={{
-                  'poder A': simResult.phases.engagementSetup.attackerPower,
-                  'poder D': simResult.phases.engagementSetup.defenderPower,
-                  terreno: simResult.phases.engagementSetup.terrain,
-                  'mod terreno': simResult.phases.engagementSetup.terrainMod,
+                <PhaseResult phaseLabel={b.phaseSetup} data={{
+                  [b.phasePowerA]:  simResult.phases.engagementSetup.attackerPower,
+                  [b.phasePowerD]:  simResult.phases.engagementSetup.defenderPower,
+                  [b.phaseTerrain]: simResult.phases.engagementSetup.terrain,
+                  [b.phaseTMod]:    simResult.phases.engagementSetup.terrainMod,
                 }} />
               </div>
-
-              {/* Battle result banner */}
-              <BattleResultBanner
-                result={simResult.result}
-                attackerSquad={attackerSquad}
-                defenderSquad={defenderSquad}
-              />
-
-              {/* Rounds */}
+              <BattleResultBanner result={simResult.result} attackerSquad={attackerSquad} defenderSquad={defenderSquad} b={b} />
               {simResult.rounds.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-display font-semibold tracking-wide">
-                      Rondas de combate ({simResult.rounds.length})
-                    </h3>
-                    <button
-                      className="text-text-muted hover:text-signal text-xs"
-                      onClick={() => setExpandedRound(expandedRound !== 'all' ? 'all' : null)}
-                    >
-                      {expandedRound === 'all' ? 'Colapsar todo' : 'Expandir todo'}
+                    <h3 className="font-display font-semibold tracking-wide">{b.roundsTitle.replace('{n}', simResult.rounds.length)}</h3>
+                    <button className="text-text-muted hover:text-signal text-xs"
+                      onClick={() => setExpandedRound(expandedRound !== 'all' ? 'all' : null)}>
+                      {expandedRound === 'all' ? b.collapseAll : b.expandAll}
                     </button>
                   </div>
                   <div className="space-y-1">
                     {simResult.rounds.map(r => (
-                      <RoundCard
-                        key={r.roundNum}
-                        round={r}
+                      <RoundCard key={r.roundNum} round={r} b={b}
                         expanded={expandedRound === 'all' || expandedRound === r.roundNum}
-                        onToggle={() => setExpandedRound(
-                          expandedRound === r.roundNum ? null : r.roundNum
-                        )}
-                      />
+                        onToggle={() => setExpandedRound(expandedRound === r.roundNum ? null : r.roundNum)} />
                     ))}
                   </div>
                 </div>
@@ -507,7 +379,7 @@ export default function BattleSim() {
             <div className="card flex items-center justify-center min-h-48">
               <div className="text-center">
                 <div className="text-4xl text-border-col mb-3">⚔</div>
-                <p className="text-text-muted text-sm">Selecciona las escuadras y ejecuta la simulación</p>
+                <p className="text-text-muted text-sm">{b.emptyState}</p>
               </div>
             </div>
           )}
