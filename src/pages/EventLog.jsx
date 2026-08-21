@@ -5,7 +5,7 @@ import EmptyState from '../components/EmptyState'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { useT } from '../i18n/LanguageContext'
 
-const EVENT_TYPE_KEYS = ['BATTLE_END','BATTLE_START','BATTLE_OVERRIDE','NATION_CREATED','NATION_DELETED','SQUAD_CREATED','SQUAD_DELETED','SQUAD_DESTROYED','VESSEL_CREATED','VESSEL_DELETED','INFO']
+const EVENT_TYPE_KEYS = ['BATTLE_END','BATTLE_START','BATTLE_OVERRIDE','NATION_CREATED','NATION_DELETED','SQUAD_CREATED','SQUAD_DELETED','SQUAD_DESTROYED','VESSEL_CREATED','VESSEL_DELETED','TURN_ADVANCE','INFO']
 
 const TYPE_COLORS = {
   BATTLE_END:'text-safe', BATTLE_START:'text-signal', BATTLE_OVERRIDE:'text-warn',
@@ -13,6 +13,7 @@ const TYPE_COLORS = {
   SQUAD_CREATED:'text-safe', SQUAD_DELETED:'text-danger',
   SQUAD_DESTROYED:'text-danger',
   VESSEL_CREATED:'text-safe', VESSEL_DELETED:'text-danger',
+  TURN_ADVANCE:'text-signal',
   INFO:'text-text-muted',
 }
 

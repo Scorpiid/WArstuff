@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { v4 as uuid } from 'uuid'
 import { DEFAULT_RULES } from './initialRules'
+import { computeSquadTurnEffects, DEFAULT_TURN_EFFECTS } from '../engine/turnEngine'
 
 // ─── Helper ────────────────────────────────────────────────────────────────
 const ts = () => new Date().toISOString()
@@ -41,6 +42,39 @@ const useStore = create(
 
     setCurrentTurn:  (n)    => set(s => { s.currentTurn  = n }),
     setCampaignName: (name) => set(s => { s.campaignName = name }),
+
+    // ── Turn effects config ────────────────────────────────────────────────
+    turnEffects: { ...DEFAULT_TURN_EFFECTS },
+    updateTurnEffects: (patch) => set(s => { Object.assign(s.turnEffects, patch) }),
+    resetTurnEffects:  ()      => set(s => { s.turnEffects = { ...DEFAULT_TURN_EFFECTS } }),
+
+    // ── Advance turn ───────────────────────────────────────────────────────
+    advanceTurn: () => set(s => {
+      s.currentTurn += 1
+      const effects = s.turnEffects || DEFAULT_TURN_EFFECTS
+      const affected = []
+
+      s.squads.forEach(sq => {
+        const patch = computeSquadTurnEffects(sq, effects)
+        if (patch) {
+          Object.assign(sq, patch)
+          affected.push(sq.name)
+        }
+      })
+
+      // Log the turn advance
+      s.events.unshift({
+        id:       uuid(),
+        type:     'TURN_ADVANCE',
+        message:  `Turno ${s.currentTurn} iniciado — ${affected.length} escuadra(s) actualizadas`,
+        nationId: null,
+        squadId:  null,
+        battleId: null,
+        turn:     s.currentTurn,
+        at:       new Date().toISOString(),
+      })
+      if (s.events.length > 1000) s.events = s.events.slice(0, 1000)
+    }),
 
     // ── Rules ─────────────────────────────────────────────────────────────
     rules: { ...DEFAULT_RULES },
@@ -252,8 +286,45 @@ const useStore = create(
       if (v) v.squadId = squadId
     }),
 
-    // ── Vessels (sea) ──────────────────────────────────────────────────────
-    vessels: [],
+    // ── Infantry units ─────────────────────────────────────────────────────
+    // Each entry: { id, squadId, typeId, count, notes }
+    infantryUnits: [],
+
+    addInfantryUnit: (data) => set(s => {
+      const unit = {
+        id:      uuid(),
+        squadId: data.squadId || null,
+        typeId:  data.typeId  || 'rifleman',
+        count:   Math.max(1, data.count ?? 10),
+        notes:   data.notes   || '',
+        createdAt: new Date().toISOString(),
+      }
+      s.infantryUnits.push(unit)
+      // Link to squad
+      if (unit.squadId) {
+        const sq = s.squads.find(x => x.id === unit.squadId)
+        if (sq) {
+          if (!sq.infantryUnitIds) sq.infantryUnitIds = []
+          if (!sq.infantryUnitIds.includes(unit.id)) sq.infantryUnitIds.push(unit.id)
+        }
+      }
+    }),
+
+    updateInfantryUnit: (id, patch) => set(s => {
+      const u = s.infantryUnits.find(x => x.id === id)
+      if (u) Object.assign(u, patch)
+    }),
+
+    deleteInfantryUnit: (id) => set(s => {
+      const u = s.infantryUnits.find(x => x.id === id)
+      if (u?.squadId) {
+        const sq = s.squads.find(x => x.id === u.squadId)
+        if (sq?.infantryUnitIds) sq.infantryUnitIds = sq.infantryUnitIds.filter(x => x !== id)
+      }
+      s.infantryUnits = s.infantryUnits.filter(x => x.id !== id)
+    }),
+
+    // ── Vessels (sea) ──────────────────────────────────────────────────────    vessels: [],
 
     addVessel: (data) => set(s => {
       const v = {
@@ -370,13 +441,15 @@ const useStore = create(
     exportCampaign: () => {
       const s = get()
       return JSON.stringify({
-        version:      '1.2',
-        exportedAt:   ts(),
+        version:      '1.3',
+        exportedAt:   new Date().toISOString(),
         campaignName: s.campaignName,
         currentTurn:  s.currentTurn,
         rules:        s.rules,
+        turnEffects:  s.turnEffects,
         nations:      s.nations,
         squads:       s.squads,
+        infantryUnits: s.infantryUnits,
         vehicles:     s.vehicles,
         vessels:      s.vessels,
         battles:      s.battles,
@@ -391,9 +464,11 @@ const useStore = create(
           if (data.campaignName) s.campaignName = data.campaignName
           if (data.currentTurn)  s.currentTurn  = data.currentTurn
           if (data.rules)        s.rules        = data.rules
-          if (data.nations)      s.nations      = data.nations
-          if (data.squads)       s.squads       = data.squads
-          if (data.vehicles)     s.vehicles     = data.vehicles
+          if (data.turnEffects)    s.turnEffects    = data.turnEffects
+          if (data.nations)        s.nations        = data.nations
+          if (data.squads)         s.squads         = data.squads
+          if (data.infantryUnits)  s.infantryUnits  = data.infantryUnits
+          if (data.vehicles)       s.vehicles       = data.vehicles
           if (data.vessels)      s.vessels      = data.vessels
           if (data.battles)      s.battles      = data.battles
           if (data.events)       s.events       = data.events
@@ -405,15 +480,17 @@ const useStore = create(
     },
 
     resetCampaign: () => set(s => {
-      s.nations      = []
-      s.squads       = []
-      s.vehicles     = []
+      s.nations        = []
+      s.squads         = []
+      s.infantryUnits  = []
+      s.vehicles       = []
       s.vessels      = []
       s.battles      = []
       s.events       = []
       s.currentTurn  = 1
       s.campaignName = 'New Campaign'
       s.rules        = { ...DEFAULT_RULES }
+      s.turnEffects  = { ...DEFAULT_TURN_EFFECTS }
     }),
 
   }))

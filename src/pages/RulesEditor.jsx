@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
 import { DEFAULT_RULES } from '../store/initialRules'
+import { DEFAULT_TURN_EFFECTS } from '../engine/turnEngine'
 import PageHeader from '../components/PageHeader'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { useT } from '../i18n/LanguageContext'
@@ -54,12 +55,15 @@ function Section({ title, children, desc }) {
 }
 
 export default function RulesEditor() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const r = t.rules
   const rules              = useStore(s => s.rules)
+  const turnEffects        = useStore(s => s.turnEffects)
   const updateRules        = useStore(s => s.updateRules)
   const updateRulesSection = useStore(s => s.updateRulesSection)
   const resetRules         = useStore(s => s.resetRules)
+  const updateTurnEffects  = useStore(s => s.updateTurnEffects)
+  const resetTurnEffects   = useStore(s => s.resetTurnEffects)
   const [confirmReset, setConfirmReset] = useState(false)
 
   const set = (path, value) => {
@@ -182,6 +186,72 @@ export default function RulesEditor() {
           </label>
         </div>
       </div>
+
+        {/* Turn effects section */}
+        <div className="card">
+          <div className="flex items-center justify-between card-header">
+            <div className="flex items-center gap-2">
+              <span className="text-signal">⏭</span>
+              <h3 className="font-display font-semibold tracking-wide">
+                {lang === 'en' ? 'Turn effects' : 'Efectos por turno'}
+              </h3>
+            </div>
+            <button
+              type="button"
+              className="btn-ghost text-xs px-2 py-1"
+              onClick={resetTurnEffects}
+            >
+              {lang === 'en' ? 'Reset' : 'Restablecer'}
+            </button>
+          </div>
+          <div className="p-4 space-y-4">
+            <p className="text-text-muted text-xs">
+              {lang === 'en'
+                ? 'Values applied to each squad when advancing a turn. "Engaged" squads receive reduced recovery.'
+                : 'Valores aplicados a cada escuadra al avanzar turno. Las escuadras "En combate" reciben recuperación reducida.'}
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <RuleNumber
+                label={lang === 'en' ? 'Fatigue recovery (active)' : 'Recuperación de fatiga (activa)'}
+                value={turnEffects?.fatigueRecovery ?? 12}
+                min={0} max={50}
+                onChange={v => updateTurnEffects({ fatigueRecovery: v })}
+              />
+              <RuleNumber
+                label={lang === 'en' ? 'Fatigue recovery (engaged)' : 'Recuperación de fatiga (en combate)'}
+                value={turnEffects?.engagedFatigueRecovery ?? 4}
+                min={0} max={20}
+                onChange={v => updateTurnEffects({ engagedFatigueRecovery: v })}
+              />
+              <RuleNumber
+                label={lang === 'en' ? 'Morale drift rate' : 'Tasa de deriva de moral'}
+                value={turnEffects?.moraleDriftRate ?? 3}
+                min={0} max={20}
+                onChange={v => updateTurnEffects({ moraleDriftRate: v })}
+                hint={lang === 'en' ? 'Per turn toward baseline' : 'Por turno hacia la base'}
+              />
+              <RuleNumber
+                label={lang === 'en' ? 'Morale baseline' : 'Moral base'}
+                value={turnEffects?.moraleBaseline ?? 75}
+                min={0} max={100}
+                onChange={v => updateTurnEffects({ moraleBaseline: v })}
+                hint={lang === 'en' ? 'Morale drifts toward this value' : 'La moral deriva hacia este valor'}
+              />
+              <RuleNumber
+                label={lang === 'en' ? 'Supply regen % (active)' : 'Regeneración suministros (activa)'}
+                value={turnEffects?.supplyRegen ?? 15}
+                min={0} max={100}
+                onChange={v => updateTurnEffects({ supplyRegen: v })}
+              />
+              <RuleNumber
+                label={lang === 'en' ? 'Supply regen % (engaged)' : 'Regeneración suministros (en combate)'}
+                value={turnEffects?.engagedSupplyRegen ?? 5}
+                min={0} max={50}
+                onChange={v => updateTurnEffects({ engagedSupplyRegen: v })}
+              />
+            </div>
+          </div>
+        </div>
 
       {confirmReset && (
         <ConfirmDialog title={r.resetTitle} message={r.resetMsg} danger

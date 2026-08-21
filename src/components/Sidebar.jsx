@@ -17,6 +17,7 @@ export default function Sidebar() {
     { to: '/squads',    icon: '◆', label: t.nav.squads },
     { to: '/vehicles',  icon: '⬡', label: t.nav.vehicles },
     { to: '/vessels',   icon: '⚓', label: t.nav.vessels },
+    { to: '/infantry',  icon: '◉', label: t.nav.infantry },
     { to: '/battle',    icon: '⚔', label: t.nav.simulator },
     { to: '/battles',   icon: '◎', label: t.nav.battles },
     { to: '/log',       icon: '≡', label: t.nav.log },
