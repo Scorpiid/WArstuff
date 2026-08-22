@@ -292,11 +292,13 @@ const useStore = create(
 
     addInfantryUnit: (data) => set(s => {
       const unit = {
-        id:      uuid(),
-        squadId: data.squadId || null,
-        typeId:  data.typeId  || 'rifleman',
-        count:   Math.max(1, data.count ?? 10),
-        notes:   data.notes   || '',
+        id:         uuid(),
+        squadId:    data.squadId    || null,
+        // New multi-type format: { [typeId]: count }
+        typeCounts: data.typeCounts || {},
+        // Legacy single-type support (auto-convert if old format used)
+        ...(data.typeId && data.count ? { typeCounts: { [data.typeId]: data.count } } : {}),
+        notes:     data.notes || '',
         createdAt: new Date().toISOString(),
       }
       s.infantryUnits.push(unit)

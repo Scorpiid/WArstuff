@@ -1,7 +1,11 @@
-/**
+﻿/**
  * Infantry Unit Types catalog
  * Each type contributes stat bonuses to the parent squad when assigned.
  * unitCount × bonusPerUnit = total contribution.
+ *
+ * terrainPenalties: multiplier applied to the squad's combat power in that terrain
+ * when this unit type is present. Values < 1.0 = penalty, > 1.0 = bonus.
+ * These are averaged across all selected unit types in a squad.
  */
 
 export const INFANTRY_CATEGORIES = {
@@ -11,6 +15,19 @@ export const INFANTRY_CATEGORIES = {
   medical:    { label: 'Sanitarios',         labelEn: 'Medical',           icon: '⚕', color: 'safe'   },
   recon:      { label: 'Reconocimiento',     labelEn: 'Reconnaissance',    icon: '👁', color: 'signal' },
   logistics:  { label: 'Logística',          labelEn: 'Logistics',         icon: '📦', color: 'muted'  },
+}
+
+// terrainPenalties keys must match rules.terrainModifiers keys:
+// open | urban | forest | mountain | desert | jungle | coast | fortified
+export const TERRAIN_LABELS = {
+  open:      { es: 'Abierto',     en: 'Open'       },
+  urban:     { es: 'Urbano',      en: 'Urban'      },
+  forest:    { es: 'Bosque',      en: 'Forest'     },
+  mountain:  { es: 'Montaña',     en: 'Mountain'   },
+  desert:    { es: 'Desierto',    en: 'Desert'     },
+  jungle:    { es: 'Jungla',      en: 'Jungle'     },
+  coast:     { es: 'Costa',       en: 'Coast'      },
+  fortified: { es: 'Fortif.',     en: 'Fortified'  },
 }
 
 export const INFANTRY_TYPES = [
@@ -23,6 +40,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Standard line infantry. The backbone of any combat squad.',
     bonusPerUnit: { combat: 0.4, defense: 0.2 },
     minCount: 1, maxCount: 200,
+    terrainPenalties: {
+      open: 1.05, urban: 0.90, forest: 0.95, mountain: 0.90,
+      desert: 1.00, jungle: 0.85, coast: 0.95, fortified: 1.10,
+    },
   },
   {
     id: 'assault_trooper',
@@ -32,6 +53,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Specialized in close combat and advancing under fire.',
     bonusPerUnit: { combat: 0.6, mobility: 0.2, defense: -0.1 },
     minCount: 1, maxCount: 100,
+    terrainPenalties: {
+      open: 1.00, urban: 1.15, forest: 0.95, mountain: 0.85,
+      desert: 0.90, jungle: 0.90, coast: 0.90, fortified: 1.10,
+    },
   },
   {
     id: 'paratrooper',
@@ -41,6 +66,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Elite airborne troops. High tactical mobility.',
     bonusPerUnit: { combat: 0.5, mobility: 0.5, stealth: 0.2 },
     minCount: 1, maxCount: 80,
+    terrainPenalties: {
+      open: 1.10, urban: 0.85, forest: 1.00, mountain: 0.90,
+      desert: 1.05, jungle: 0.90, coast: 0.85, fortified: 0.80,
+    },
   },
   {
     id: 'ranger',
@@ -50,6 +79,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Light special operations infantry, trained for behind-enemy-lines missions.',
     bonusPerUnit: { combat: 0.7, stealth: 0.5, experience: 0.3 },
     minCount: 1, maxCount: 60,
+    terrainPenalties: {
+      open: 0.95, urban: 1.00, forest: 1.20, mountain: 1.15,
+      desert: 0.95, jungle: 1.20, coast: 0.95, fortified: 0.90,
+    },
   },
 
   // ── Support ───────────────────────────────────────────────────────────────
@@ -61,6 +94,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Sustained suppression fire. Controls fields of fire.',
     bonusPerUnit: { combat: 0.3, defense: 0.5 },
     minCount: 1, maxCount: 30,
+    terrainPenalties: {
+      open: 1.15, urban: 0.90, forest: 0.85, mountain: 1.00,
+      desert: 1.10, jungle: 0.75, coast: 1.05, fortified: 1.10,
+    },
   },
   {
     id: 'anti_tank',
@@ -70,6 +107,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Equipped with RPGs/ATGMs to neutralize enemy armor.',
     bonusPerUnit: { combat: 0.8, defense: 0.3 },
     minCount: 1, maxCount: 40,
+    terrainPenalties: {
+      open: 1.00, urban: 1.10, forest: 0.85, mountain: 0.90,
+      desert: 1.00, jungle: 0.80, coast: 0.90, fortified: 1.05,
+    },
   },
   {
     id: 'anti_air',
@@ -79,6 +120,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Portable air defense missiles. Protection against helicopters and drones.',
     bonusPerUnit: { defense: 0.6, combat: 0.2 },
     minCount: 1, maxCount: 20,
+    terrainPenalties: {
+      open: 1.10, urban: 0.90, forest: 0.85, mountain: 0.95,
+      desert: 1.10, jungle: 0.80, coast: 1.00, fortified: 0.95,
+    },
   },
   {
     id: 'mortar_crew',
@@ -88,6 +133,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Organic indirect fire. Supports attacks without direct line of sight.',
     bonusPerUnit: { combat: 0.5, defense: 0.4 },
     minCount: 1, maxCount: 20,
+    terrainPenalties: {
+      open: 1.05, urban: 0.80, forest: 0.90, mountain: 1.00,
+      desert: 1.05, jungle: 0.85, coast: 0.95, fortified: 1.05,
+    },
   },
   {
     id: 'sniper',
@@ -97,6 +146,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'High-value target elimination at long range.',
     bonusPerUnit: { combat: 0.5, stealth: 0.6, accuracy: 0.8 },
     minCount: 1, maxCount: 20,
+    terrainPenalties: {
+      open: 1.20, urban: 1.10, forest: 1.15, mountain: 1.20,
+      desert: 1.15, jungle: 0.85, coast: 1.10, fortified: 1.00,
+    },
   },
 
   // ── Specialists ───────────────────────────────────────────────────────────
@@ -108,6 +161,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Demolitions, breaching, bridging, and mine clearing.',
     bonusPerUnit: { combat: 0.2, defense: 0.4, mobility: 0.3 },
     minCount: 1, maxCount: 30,
+    terrainPenalties: {
+      open: 0.95, urban: 1.15, forest: 1.00, mountain: 1.10,
+      desert: 0.95, jungle: 1.05, coast: 1.10, fortified: 1.20,
+    },
   },
   {
     id: 'demo_expert',
@@ -117,6 +174,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Specialist in explosives and infrastructure sabotage.',
     bonusPerUnit: { combat: 0.6, stealth: 0.3 },
     minCount: 1, maxCount: 15,
+    terrainPenalties: {
+      open: 0.90, urban: 1.20, forest: 0.95, mountain: 1.00,
+      desert: 0.90, jungle: 0.95, coast: 1.00, fortified: 1.25,
+    },
   },
   {
     id: 'radio_operator',
@@ -126,6 +187,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Tactical communications. Improves coordination and fire support.',
     bonusPerUnit: { communications: 1.0, leadership: 0.2 },
     minCount: 1, maxCount: 10,
+    terrainPenalties: {
+      open: 1.00, urban: 0.90, forest: 0.95, mountain: 0.85,
+      desert: 1.00, jungle: 0.85, coast: 0.95, fortified: 1.00,
+    },
   },
   {
     id: 'drone_operator',
@@ -135,6 +200,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Tactical ISR with UAVs. Detects enemy positions.',
     bonusPerUnit: { stealth: 0.5, combat: 0.3, communications: 0.5 },
     minCount: 1, maxCount: 10,
+    terrainPenalties: {
+      open: 1.15, urban: 0.85, forest: 0.90, mountain: 1.00,
+      desert: 1.10, jungle: 0.80, coast: 1.05, fortified: 0.90,
+    },
   },
   {
     id: 'jtac',
@@ -144,6 +213,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Directs air support and artillery. Combat multiplier.',
     bonusPerUnit: { combat: 1.0, leadership: 0.5 },
     minCount: 1, maxCount: 5,
+    terrainPenalties: {
+      open: 1.20, urban: 0.85, forest: 0.85, mountain: 1.00,
+      desert: 1.15, jungle: 0.75, coast: 1.05, fortified: 0.90,
+    },
   },
 
   // ── Medical ───────────────────────────────────────────────────────────────
@@ -155,6 +228,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Stabilizes wounded in combat. Reduces casualty mortality.',
     bonusPerUnit: { medical: 1.2, morale: 0.3 },
     minCount: 1, maxCount: 30,
+    terrainPenalties: {
+      open: 1.00, urban: 1.00, forest: 1.00, mountain: 0.95,
+      desert: 1.00, jungle: 0.95, coast: 1.00, fortified: 1.00,
+    },
   },
   {
     id: 'field_surgeon',
@@ -164,6 +241,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Advanced field surgery. Saves critically wounded.',
     bonusPerUnit: { medical: 2.0, morale: 0.5 },
     minCount: 1, maxCount: 5,
+    terrainPenalties: {
+      open: 1.00, urban: 1.00, forest: 0.95, mountain: 0.90,
+      desert: 0.95, jungle: 0.85, coast: 1.00, fortified: 1.00,
+    },
   },
   {
     id: 'stretcher_bearer',
@@ -173,6 +254,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Evacuation of wounded under fire. Keeps morale high.',
     bonusPerUnit: { medical: 0.6, morale: 0.4 },
     minCount: 1, maxCount: 20,
+    terrainPenalties: {
+      open: 1.00, urban: 0.90, forest: 0.95, mountain: 0.85,
+      desert: 0.95, jungle: 0.85, coast: 0.95, fortified: 1.00,
+    },
   },
 
   // ── Recon ─────────────────────────────────────────────────────────────────
@@ -184,6 +269,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Forward reconnaissance. Detects enemy positions.',
     bonusPerUnit: { stealth: 0.6, mobility: 0.4, communications: 0.2 },
     minCount: 1, maxCount: 20,
+    terrainPenalties: {
+      open: 0.95, urban: 1.00, forest: 1.20, mountain: 1.15,
+      desert: 1.00, jungle: 1.20, coast: 1.00, fortified: 0.85,
+    },
   },
   {
     id: 'pathfinder',
@@ -193,6 +282,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Opens routes and secures landing zones.',
     bonusPerUnit: { stealth: 0.5, mobility: 0.6 },
     minCount: 1, maxCount: 10,
+    terrainPenalties: {
+      open: 1.00, urban: 0.90, forest: 1.15, mountain: 1.10,
+      desert: 1.00, jungle: 1.15, coast: 1.05, fortified: 0.80,
+    },
   },
   {
     id: 'intelligence_officer',
@@ -202,6 +295,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Tactical intelligence analysis. Improves decision making.',
     bonusPerUnit: { stealth: 0.3, leadership: 0.8, communications: 0.4 },
     minCount: 1, maxCount: 5,
+    terrainPenalties: {
+      open: 1.00, urban: 1.05, forest: 1.00, mountain: 1.00,
+      desert: 1.00, jungle: 0.95, coast: 1.00, fortified: 1.00,
+    },
   },
 
   // ── Logistics ─────────────────────────────────────────────────────────────
@@ -213,6 +310,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Supply management and material replenishment.',
     bonusPerUnit: { logistics: 0.8 },
     minCount: 1, maxCount: 20,
+    terrainPenalties: {
+      open: 1.00, urban: 0.90, forest: 0.85, mountain: 0.80,
+      desert: 0.90, jungle: 0.80, coast: 0.95, fortified: 1.00,
+    },
   },
   {
     id: 'mechanic',
@@ -222,6 +323,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Vehicle and equipment repair in the field.',
     bonusPerUnit: { logistics: 0.6, mobility: 0.2 },
     minCount: 1, maxCount: 15,
+    terrainPenalties: {
+      open: 1.00, urban: 1.00, forest: 0.90, mountain: 0.85,
+      desert: 0.95, jungle: 0.85, coast: 0.95, fortified: 1.00,
+    },
   },
   {
     id: 'ammo_bearer',
@@ -231,6 +336,10 @@ export const INFANTRY_TYPES = [
     descriptionEn: 'Transport and distribution of ammunition under fire.',
     bonusPerUnit: { logistics: 0.4, combat: 0.1 },
     minCount: 1, maxCount: 30,
+    terrainPenalties: {
+      open: 1.00, urban: 0.85, forest: 0.90, mountain: 0.80,
+      desert: 0.95, jungle: 0.80, coast: 0.90, fortified: 1.00,
+    },
   },
 ]
 
@@ -251,9 +360,38 @@ export function calcInfantryBonuses(units) {
       if (totals[stat] !== undefined) totals[stat] += perUnit * count
     }
   }
-  // Round and clamp 0-100
   for (const k of Object.keys(totals)) {
     totals[k] = Math.max(0, Math.min(100, Math.round(totals[k])))
   }
   return totals
+}
+
+/**
+ * Calculate the combined terrain modifier for a mix of infantry types.
+ * Returns an object { terrainKey: multiplier } where multiplier is the
+ * weighted average of all selected types' terrain penalties.
+ * Types with more soldiers have proportionally more weight.
+ *
+ * units = [{ typeId, count }]
+ */
+export function calcInfantryTerrainModifiers(units) {
+  const terrainKeys = ['open','urban','forest','mountain','desert','jungle','coast','fortified']
+  const result = {}
+
+  const totalCount = units.reduce((a, u) => a + (u.count || 0), 0)
+  if (totalCount === 0) {
+    terrainKeys.forEach(k => { result[k] = 1.0 })
+    return result
+  }
+
+  for (const k of terrainKeys) {
+    let weightedSum = 0
+    for (const { typeId, count } of units) {
+      const def = INFANTRY_TYPES.find(t => t.id === typeId)
+      const pen = def?.terrainPenalties?.[k] ?? 1.0
+      weightedSum += pen * count
+    }
+    result[k] = Math.round((weightedSum / totalCount) * 100) / 100
+  }
+  return result
 }
