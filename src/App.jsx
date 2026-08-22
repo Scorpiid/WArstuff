@@ -21,18 +21,18 @@ export default function App() {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <Routes>
-            <Route path="/"         element={<Dashboard />} />
-            <Route path="/nations"  element={<Nations />} />
-            <Route path="/squads"   element={<Squads />} />
+            <Route path="/"          element={<Dashboard />} />
+            <Route path="/nations"   element={<Nations />} />
+            <Route path="/squads"    element={<Squads />} />
             <Route path="/vehicles"  element={<Vehicles />} />
             <Route path="/vessels"   element={<Vessels />} />
             <Route path="/infantry"  element={<Infantry />} />
-            <Route path="/battle"   element={<BattleSim />} />
-            <Route path="/battles"  element={<Battles />} />
-            <Route path="/log"      element={<EventLog />} />
-            <Route path="/rules"    element={<RulesEditor />} />
-            <Route path="/stats"    element={<Statistics />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/battle"    element={<BattleSim />} />
+            <Route path="/battles"   element={<Battles />} />
+            <Route path="/log"       element={<EventLog />} />
+            <Route path="/rules"     element={<RulesEditor />} />
+            <Route path="/stats"     element={<Statistics />} />
+            <Route path="/settings"  element={<Settings />} />
           </Routes>
         </div>
       </main>

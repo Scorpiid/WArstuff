@@ -326,7 +326,8 @@ const useStore = create(
       s.infantryUnits = s.infantryUnits.filter(x => x.id !== id)
     }),
 
-    // ── Vessels (sea) ──────────────────────────────────────────────────────    vessels: [],
+    // ── Vessels (sea) ──────────────────────────────────────────────────────
+    vessels: [],
 
     addVessel: (data) => set(s => {
       const v = {
