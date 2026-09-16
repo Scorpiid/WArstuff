@@ -16,6 +16,15 @@ function localFilePlugin() {
         html = html.replace(/\s*type="module"/g, '')
         // Remove crossorigin attribute
         html = html.replace(/\s*crossorigin/g, '')
+        // Move script to end of body (React needs #root to exist before mounting)
+        // and add defer as fallback
+        html = html.replace(/<script\s+src=/g, '<script defer src=')
+        // Move all script tags from <head> to before </body>
+        const scriptMatches = [...html.matchAll(/<script[^>]*src="[^"]*"[^>]*><\/script>/g)]
+        scriptMatches.forEach(match => {
+          html = html.replace(match[0], '')
+          html = html.replace('</body>', `  ${match[0].replace('defer', '').replace('<script ', '<script defer ')}\n</body>`)
+        })
         writeFileSync(htmlPath, html, 'utf-8')
         console.log('✓ index.html patched for file:// compatibility')
       } catch (e) {
